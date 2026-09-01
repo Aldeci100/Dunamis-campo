@@ -106,6 +106,36 @@
   </div>
 </div>
 
+<div class="modal-fundo" id="modalAbono" style="display:none;">
+  <div class="modal-caixa">
+    <h2>Abonar falta</h2>
+    <div class="sub" id="abonoNomeFuncionario" style="margin-top:-8px;margin-bottom:10px;"></div>
+
+    <form id="formAbono">
+      <label style="margin-top:0;">Data</label>
+      <input type="date" id="abonoData" required>
+
+      <label>Tipo</label>
+      <select id="abonoTipo">
+        <option value="atestado">Atestado médico</option>
+        <option value="falta_justificada">Falta justificada</option>
+        <option value="folga">Folga</option>
+        <option value="feriado">Feriado</option>
+        <option value="outros">Outros</option>
+      </select>
+
+      <label>Motivo (opcional)</label>
+      <input type="text" id="abonoMotivo" placeholder="Ex: consulta médica, sem sinal na obra...">
+
+      <button type="submit" class="btn-primaria" style="margin-top:16px;">Lançar abono</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnFecharAbono">Fechar</button>
+    </form>
+
+    <label style="margin-top:22px;">Abonos já lançados</label>
+    <div id="listaAbonosFuncionario" class="lista" style="margin-top:8px;"></div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>

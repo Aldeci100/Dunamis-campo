@@ -56,6 +56,19 @@ alocacoes/{id}
   funcao          string
 ```
 
+## abonos
+Justificativa de dia sem ponto batido (atestado, falta justificada,
+folga, feriado). Lançado pelo RH em Funcionários → "📋 Abonar falta".
+Só documenta — não soma horas no Financeiro nem no custo da obra, só
+aparece anotado no Espelho de Ponto no lugar do dia em branco.
+```
+abonos/{id}
+  funcionarioId   string
+  data            date
+  tipo            "atestado" | "falta_justificada" | "folga" | "feriado" | "outros"
+  motivo          string   (opcional)
+```
+
 ## pontos
 Check-in/check-out mobile com geolocalização.
 ```
@@ -107,7 +120,8 @@ o mês, junta todos os pares entrada/saída dele naquele mês (em
 qualquer obra) e abre HTML pra imprimir: data, marcações do dia, total
 de horas do dia, total do mês, e linhas de assinatura no final (padrão
 de documento de RH/DP). Igual ao relatório de obra, não fica salvo em
-lugar nenhum — é montado na hora.
+lugar nenhum — é montado na hora. Dias com `abonos` lançados aparecem
+anotados ("Abonado: ...") no lugar de ficarem em branco.
 
 ## financeiro (fechamento)
 Não é coleção própria — a tela cruza `pontos` (pares entrada/saída ×

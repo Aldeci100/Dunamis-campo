@@ -18,6 +18,13 @@ const campoSalario = document.getElementById("funcSalario");
 const campoCustoHora = document.getElementById("funcCustoHora");
 
 const rotuloStatus = { ativo: "Ativo", afastado: "Afastado", inativo: "Inativo" };
+const rotuloAbono = {
+    atestado: "Atestado médico",
+    falta_justificada: "Falta justificada",
+    folga: "Folga",
+    feriado: "Feriado",
+    outros: "Outros",
+};
 
 function formatarMoeda(valor) {
     return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -31,7 +38,9 @@ function formatarDataIso(iso) {
 
 let obrasCache = [];
 let pontosCache = [];
+let abonosCache = [];
 let funcionarioEspelhoAtual = null;
+let funcionarioAbonoAtual = null;
 
 function renderizarFuncionarios(funcionarios) {
     if (!funcionarios.length) {
@@ -58,7 +67,10 @@ function renderizarFuncionarios(funcionarios) {
             </div>
             ${beneficios.length ? `<div class="sub" style="margin-top:8px;">Benefícios: ${beneficios.join(", ")}</div>` : ""}
             ${f.custoHora ? `<div class="sub">${f.salario ? "Salário: " + formatarMoeda(f.salario) + " · " : ""}Custo/hora: ${formatarMoeda(f.custoHora)}</div>` : ""}
-            <button type="button" class="btn-secundaria btn-espelho" data-id="${f.id}" style="margin-top:10px;">🕒 Espelho de ponto</button>
+            <div class="linha-2" style="margin-top:10px;">
+                <button type="button" class="btn-secundaria btn-espelho" data-id="${f.id}">🕒 Espelho</button>
+                <button type="button" class="btn-secundaria btn-abono" data-id="${f.id}">📋 Abonar falta</button>
+            </div>
         </div>`;
     }).join("");
 
@@ -70,6 +82,13 @@ function renderizarFuncionarios(funcionarios) {
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
             abrirModalEspelho(funcionarios.find((f) => f.id === btn.dataset.id));
+        });
+    });
+
+    listaEl.querySelectorAll(".btn-abono").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            abrirModalAbono(funcionarios.find((f) => f.id === btn.dataset.id));
         });
     });
 }
@@ -174,6 +193,66 @@ btnExcluir.addEventListener("click", async () => {
     fecharModal();
 });
 
+const modalAbono = document.getElementById("modalAbono");
+const formAbono = document.getElementById("formAbono");
+const listaAbonosEl = document.getElementById("listaAbonosFuncionario");
+
+function abrirModalAbono(funcionario) {
+    if (!funcionario) return;
+    funcionarioAbonoAtual = funcionario;
+    document.getElementById("abonoNomeFuncionario").textContent = funcionario.nome;
+    formAbono.reset();
+    document.getElementById("abonoData").value = new Date().toISOString().slice(0, 10);
+    renderizarAbonosFuncionario();
+    modalAbono.style.display = "flex";
+}
+
+function renderizarAbonosFuncionario() {
+    if (!funcionarioAbonoAtual) return;
+    const abonos = abonosCache
+        .filter((a) => a.funcionarioId === funcionarioAbonoAtual.id)
+        .sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+
+    listaAbonosEl.innerHTML = abonos.length
+        ? abonos.map((a) => `
+            <div class="item" style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                <div>
+                    <div class="nome">${formatarDataIso(a.data)} — ${rotuloAbono[a.tipo] || a.tipo}</div>
+                    ${a.motivo ? `<div class="sub">${a.motivo}</div>` : ""}
+                </div>
+                <button type="button" class="btn-perigo btn-excluir-abono" data-id="${a.id}" style="padding:8px 12px;font-size:12px;white-space:nowrap;">Excluir</button>
+            </div>
+        `).join("")
+        : '<div class="vazio">Nenhum abono lançado ainda.</div>';
+
+    listaAbonosEl.querySelectorAll(".btn-excluir-abono").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("Excluir este abono?")) return;
+            await removerDocumento("abonos", btn.dataset.id);
+        });
+    });
+}
+
+document.getElementById("btnFecharAbono").addEventListener("click", () => {
+    modalAbono.style.display = "none";
+});
+modalAbono.addEventListener("click", (e) => { if (e.target === modalAbono) modalAbono.style.display = "none"; });
+
+formAbono.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!funcionarioAbonoAtual) return;
+
+    await salvarDocumento("abonos", {
+        funcionarioId: funcionarioAbonoAtual.id,
+        data: document.getElementById("abonoData").value,
+        tipo: document.getElementById("abonoTipo").value,
+        motivo: document.getElementById("abonoMotivo").value.trim(),
+    });
+
+    formAbono.reset();
+    document.getElementById("abonoData").value = new Date().toISOString().slice(0, 10);
+});
+
 const modalEspelho = document.getElementById("modalEspelho");
 const campoMesEspelho = document.getElementById("espelhoMes");
 
@@ -223,12 +302,17 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
         (porDia[dia] = porDia[dia] || []).push(p);
     });
 
-    const dias = Object.keys(porDia).sort();
+    const abonoPorDia = {};
+    abonosCache
+        .filter((a) => a.funcionarioId === funcionario.id && (a.data || "").startsWith(mesIso))
+        .forEach((a) => { abonoPorDia[a.data] = a; });
+
+    const dias = Array.from(new Set([...Object.keys(porDia), ...Object.keys(abonoPorDia)])).sort();
     let totalMesHoras = 0;
 
     const linhas = dias.length
         ? dias.map((dia) => {
-            const pontos = porDia[dia];
+            const pontos = porDia[dia] || [];
             const pares = [];
             let entradaAberta = null;
             let horasDia = 0;
@@ -243,6 +327,11 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
             });
             if (entradaAberta) pares.push(`${formatarHora(entradaAberta.timestamp)} — (sem saída)`);
             totalMesHoras += horasDia;
+
+            const abono = abonoPorDia[dia];
+            if (abono) {
+                pares.push(`<i>Abonado: ${rotuloAbono[abono.tipo] || abono.tipo}${abono.motivo ? " — " + abono.motivo : ""}</i>`);
+            }
 
             return `<tr><td>${formatarDataIso(dia)}</td><td>${pares.join("<br>")}</td><td>${formatarHoras(horasDia)}</td></tr>`;
         }).join("")
@@ -310,6 +399,11 @@ observarColecao("obras", (obras) => {
 
 observarColecao("pontos", (pontos) => {
     pontosCache = pontos;
+});
+
+observarColecao("abonos", (abonos) => {
+    abonosCache = abonos;
+    if (modalAbono.style.display === "flex") renderizarAbonosFuncionario();
 });
 
 observarColecao(COLECAO, renderizarFuncionarios);

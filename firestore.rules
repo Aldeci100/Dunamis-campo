@@ -67,6 +67,10 @@ service cloud.firestore {
       allow read, write: if temPapel(['rh']);
     }
 
+    match /abonos/{id} {
+      allow read, write: if temPapel(['rh']);
+    }
+
     match /despesas/{id} {
       allow read, create, update: if temPapel(['financeiro']);
       allow delete: if ehAdmin();
