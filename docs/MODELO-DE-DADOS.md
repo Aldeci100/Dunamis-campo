@@ -101,6 +101,14 @@ Não fica salvo em nenhum lugar, é montado na hora com o mesmo cálculo
 do Financeiro (mão de obra por funcionário, despesas, valor líquido,
 margem), só que olhando **todos os períodos** da obra, não um mês.
 
+## Espelho de ponto
+Botão "🕒 Espelho de ponto" em cada funcionário, em Funcionários. Pede
+o mês, junta todos os pares entrada/saída dele naquele mês (em
+qualquer obra) e abre HTML pra imprimir: data, marcações do dia, total
+de horas do dia, total do mês, e linhas de assinatura no final (padrão
+de documento de RH/DP). Igual ao relatório de obra, não fica salvo em
+lugar nenhum — é montado na hora.
+
 ## financeiro (fechamento)
 Não é coleção própria — a tela cruza `pontos` (pares entrada/saída ×
 `custoHora` do funcionário = mão de obra) com `despesas`, agrupado por
