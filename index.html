@@ -79,6 +79,13 @@
     color: #111827;
   }
 
+  /* Remove o ícone nativo de mostrar senha do Edge/IE — usamos o
+     botão próprio (.btn-olho) no lugar, pra não ficar duplicado. */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
   .campo input:focus {
     outline: none;
     border-color: #3b82f6;
