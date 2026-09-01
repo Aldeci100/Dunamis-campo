@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dunamis Services</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon.svg">
+<meta name="theme-color" content="#0f172a">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="logo-login">
+    <div style="font-size:40px;">🏗️</div>
+    <h1>Dunamis Services</h1>
+    <p>Obras · Ponto · RH · SST</p>
+  </div>
+
+  <form id="formLogin">
+    <label>E-mail</label>
+    <input type="email" placeholder="seu@email.com" required>
+
+    <label>Senha</label>
+    <input type="password" placeholder="••••••••" required>
+
+    <button type="submit" class="btn-primaria btnLogin">ENTRAR</button>
+  </form>
+
+  <p class="aviso" id="avisoModo"></p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>

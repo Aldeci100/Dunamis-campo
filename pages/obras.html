@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obras — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Obras</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <div id="listaObras" class="lista"></div>
+</div>
+
+<div class="fab" id="btnNovaObra">+</div>
+
+<div class="modal-fundo" id="modalObra" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalObra">Nova obra</h2>
+    <form id="formObra">
+      <input type="hidden" id="obraId">
+
+      <label>Nome da obra</label>
+      <input type="text" id="obraNome" required>
+
+      <label>Cliente</label>
+      <input type="text" id="obraCliente" placeholder="Ex: Enave" required>
+
+      <label>Endereço</label>
+      <input type="text" id="obraEndereco">
+
+      <div class="linha-2">
+        <div>
+          <label>Valor do contrato (R$)</label>
+          <input type="number" id="obraValor" step="0.01" min="0" placeholder="Ex: 15400">
+        </div>
+        <div>
+          <label>Imposto da nota (%)</label>
+          <input type="number" id="obraAliquotaImposto" step="0.01" min="0" max="100" placeholder="Ex: 6">
+        </div>
+      </div>
+
+      <label>Status</label>
+      <select id="obraStatus">
+        <option value="planejada">Planejada</option>
+        <option value="andamento">Em andamento</option>
+        <option value="concluida">Concluída</option>
+        <option value="parada">Parada</option>
+      </select>
+
+      <div class="linha-2">
+        <div>
+          <label>Início</label>
+          <input type="date" id="obraDataInicio">
+        </div>
+        <div>
+          <label>Previsão de fim</label>
+          <input type="date" id="obraDataFim">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarObra">Cancelar</button>
+      <button type="button" class="btn-perigo" style="width:100%;margin-top:10px;display:none;" id="btnExcluirObra">Excluir obra</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/obras.js"></script>
+</body>
+</html>

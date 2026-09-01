@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Funcionários — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Funcionários</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <div id="listaFuncionarios" class="lista"></div>
+</div>
+
+<div class="fab" id="btnNovoFuncionario">+</div>
+
+<div class="modal-fundo" id="modalFuncionario" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalFuncionario">Novo funcionário</h2>
+    <form id="formFuncionario">
+      <input type="hidden" id="funcId">
+
+      <label>Nome completo</label>
+      <input type="text" id="funcNome" required>
+
+      <div class="linha-2">
+        <div>
+          <label>CPF</label>
+          <input type="text" id="funcCpf" placeholder="000.000.000-00">
+        </div>
+        <div>
+          <label>Telefone</label>
+          <input type="text" id="funcTelefone" placeholder="(00) 00000-0000">
+        </div>
+      </div>
+
+      <label>Cargo / função</label>
+      <input type="text" id="funcCargo" placeholder="Ex: Eletricista, Encarregado">
+
+      <label>Data de admissão</label>
+      <input type="date" id="funcAdmissao">
+
+      <label>Obra atual</label>
+      <select id="funcObra">
+        <option value="">Sem obra no momento</option>
+      </select>
+
+      <label>Status</label>
+      <select id="funcStatus">
+        <option value="ativo">Ativo</option>
+        <option value="afastado">Afastado</option>
+        <option value="inativo">Inativo</option>
+      </select>
+
+      <label>PIN de ponto (4 dígitos, opcional)</label>
+      <input type="text" id="funcPin" maxlength="4" inputmode="numeric" placeholder="Ex: 1234">
+
+      <label>Salário mensal (R$, opcional)</label>
+      <input type="number" id="funcSalario" step="0.01" min="0" placeholder="Ex: 2200.00">
+
+      <label>Custo por hora (R$)</label>
+      <input type="number" id="funcCustoHora" step="0.01" min="0" placeholder="Ex: 25.00">
+      <p class="aviso" style="text-align:left;margin-top:6px;">
+        Com salário preenchido, o custo/hora é calculado sozinho
+        (salário ÷ 220h, jornada padrão CLT) e o campo fica travado.
+        Sem salário (ex: diarista, terceirizado), preencha o custo/hora
+        na mão.
+      </p>
+
+      <label style="margin-top:18px;">Benefícios</label>
+      <div class="check">
+        <input type="checkbox" id="funcValeTransporte">
+        <label style="margin:0;" for="funcValeTransporte">Tem direito a vale-transporte</label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="funcValeAlimentacao">
+        <label style="margin:0;" for="funcValeAlimentacao">Tem direito a vale-alimentação</label>
+      </div>
+
+      <label>Motivo (se não tiver direito a algum benefício)</label>
+      <input type="text" id="funcMotivoExclusao" placeholder="Ex: recebe transporte fornecido pela empresa">
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarFuncionario">Cancelar</button>
+      <button type="button" class="btn-perigo" style="width:100%;margin-top:10px;display:none;" id="btnExcluirFuncionario">Excluir funcionário</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/funcionarios.js"></script>
+</body>
+</html>

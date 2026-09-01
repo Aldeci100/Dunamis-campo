@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Usuários — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Usuários</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <p class="aviso" style="text-align:left;margin-top:0;">
+    Aqui você define o que cada pessoa pode acessar. A conta de login
+    (e-mail/senha) precisa ser criada antes no
+    <strong>Console do Firebase → Authentication</strong> — aqui você só
+    libera o acesso dela aos módulos do sistema.
+  </p>
+
+  <div id="listaUsuarios" class="lista"></div>
+</div>
+
+<div class="fab" id="btnNovoUsuario">+</div>
+
+<div class="modal-fundo" id="modalUsuario" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalUsuario">Liberar acesso</h2>
+    <form id="formUsuario">
+      <input type="hidden" id="usuarioIdOriginal">
+
+      <label>E-mail (o mesmo usado no login)</label>
+      <input type="email" id="usuarioEmail" required>
+
+      <label>Nome</label>
+      <input type="text" id="usuarioNome">
+
+      <label>Setor / papel</label>
+      <select id="usuarioPapel">
+        <option value="admin">Administrador (acesso total)</option>
+        <option value="rh">RH</option>
+        <option value="sst">Segurança do Trabalho (SST)</option>
+        <option value="financeiro">Financeiro</option>
+        <option value="campo">Campo (ponto)</option>
+      </select>
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarUsuario">Cancelar</button>
+      <button type="button" class="btn-perigo" style="width:100%;margin-top:10px;display:none;" id="btnExcluirUsuario">Remover acesso</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/usuarios.js"></script>
+</body>
+</html>

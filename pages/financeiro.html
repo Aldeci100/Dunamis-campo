@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Financeiro — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Financeiro</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <label>Mês do fechamento</label>
+  <input type="month" id="filtroMes">
+
+  <div class="ponto-status" style="margin-top:16px;padding:16px;">
+    <div class="sub">Custo total no mês (mão de obra + despesas)</div>
+    <div class="grande" id="totalGeral" style="font-size:24px;">R$ 0,00</div>
+  </div>
+
+  <label style="margin-top:20px;">Por obra</label>
+  <div id="listaObrasFinanceiro" class="lista"></div>
+</div>
+
+<div class="modal-fundo" id="modalDetalheObra" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloDetalheObra">Detalhe</h2>
+
+    <div id="resumoContratoObra" class="item" style="display:none;margin-top:12px;"></div>
+
+    <label style="margin-top:18px;">Mão de obra</label>
+    <div id="listaMaoDeObra" class="lista" style="margin-top:8px;"></div>
+
+    <label style="margin-top:18px;">Despesas</label>
+    <div id="listaDespesasObra" class="lista" style="margin-top:8px;"></div>
+
+    <button type="button" class="btn-secundaria" style="margin-top:18px;" id="btnFecharDetalhe">Fechar</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/financeiro.js"></script>
+</body>
+</html>

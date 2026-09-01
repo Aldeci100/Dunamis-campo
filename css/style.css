@@ -1,0 +1,364 @@
+:root {
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #0f172a;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --accent: #38bdf8;
+  --accent-dark: #0284c7;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.tela {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 90px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.topo h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.topo .voltar {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.logo-login {
+  text-align: center;
+  margin: 40px 0 30px;
+}
+
+.logo-login h1 {
+  font-size: 26px;
+  margin: 12px 0 4px;
+}
+
+.logo-login p {
+  color: var(--text-dim);
+  margin: 0;
+  font-size: 14px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 14px 0 6px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 13px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 14px;
+}
+
+.btn-primaria {
+  width: 100%;
+  background: var(--accent);
+  color: #04121e;
+  margin-top: 22px;
+}
+
+.btn-primaria:disabled {
+  opacity: 0.6;
+}
+
+.btn-secundaria {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-perigo {
+  background: var(--danger);
+  color: #fff;
+}
+
+.grade-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.card-modulo {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 14px;
+  text-decoration: none;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-modulo .icone {
+  font-size: 26px;
+}
+
+.card-modulo .titulo {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.card-modulo .desc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.card-modulo.em-breve {
+  opacity: 0.5;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.item .linha-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.item .nome {
+  font-weight: 600;
+}
+
+.item .sub {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.selo {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.selo-andamento { background: rgba(56,189,248,0.15); color: var(--accent); }
+.selo-planejada { background: rgba(148,163,184,0.15); color: var(--text-dim); }
+.selo-concluida { background: rgba(34,197,94,0.15); color: var(--ok); }
+.selo-parada { background: rgba(239,68,68,0.15); color: var(--danger); }
+.selo-ativo { background: rgba(34,197,94,0.15); color: var(--ok); }
+.selo-inativo { background: rgba(148,163,184,0.15); color: var(--text-dim); }
+.selo-afastado { background: rgba(245,158,11,0.15); color: var(--warn); }
+.selo-valido { background: rgba(34,197,94,0.15); color: var(--ok); }
+.selo-vencendo { background: rgba(245,158,11,0.15); color: var(--warn); }
+.selo-vencido { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+.abas {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-top: 16px;
+  padding-bottom: 2px;
+}
+
+.aba {
+  flex: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.aba.ativa {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04121e;
+}
+
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 50%;
+  transform: translateX(calc(240px - 24px));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #04121e;
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+}
+
+@media (max-width: 520px) {
+  .fab { right: 20px; transform: none; }
+}
+
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-caixa {
+  background: var(--bg-card);
+  border-radius: 18px 18px 0 0;
+  padding: 20px 16px 30px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.modal-caixa h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.linha-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.check input { width: auto; }
+
+.vazio {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px 10px;
+  font-size: 14px;
+}
+
+.ponto-status {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 18px;
+  text-align: center;
+}
+
+.ponto-status .grande {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 6px 0;
+}
+
+.ponto-status .geo-info {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 10px;
+}
+
+.btn-ponto {
+  width: 100%;
+  padding: 20px;
+  font-size: 17px;
+  margin-top: 18px;
+  border-radius: 14px;
+}
+
+.btn-entrada { background: var(--ok); color: #04210f; }
+.btn-saida { background: var(--danger); color: #fff; }
+
+.aviso {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.rodape-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.rodape-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 11px;
+  text-align: center;
+  padding: 6px 18px;
+}
+
+.rodape-nav a.ativo {
+  color: var(--accent);
+}

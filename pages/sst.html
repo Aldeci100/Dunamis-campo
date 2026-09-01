@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SST — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>SST</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <div class="abas">
+    <button type="button" class="aba ativa" data-aba="aso">ASO</button>
+    <button type="button" class="aba" data-aba="epis">EPI</button>
+    <button type="button" class="aba" data-aba="treinamentos">Treinamentos</button>
+    <button type="button" class="aba" data-aba="ocorrencias">Ocorrências</button>
+  </div>
+
+  <div id="listaSst" class="lista"></div>
+</div>
+
+<div class="fab" id="btnNovoSst">+</div>
+
+<!-- ASO -->
+<div class="modal-fundo" id="modalAso" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalAso">Novo ASO</h2>
+    <form id="formAso">
+      <input type="hidden" id="asoId">
+
+      <label>Funcionário</label>
+      <select id="asoFuncionario" required></select>
+
+      <label>Tipo de exame</label>
+      <select id="asoTipo">
+        <option value="admissional">Admissional</option>
+        <option value="periodico">Periódico</option>
+        <option value="demissional">Demissional</option>
+      </select>
+
+      <div class="linha-2">
+        <div>
+          <label>Data do exame</label>
+          <input type="date" id="asoDataRealizacao" required>
+        </div>
+        <div>
+          <label>Válido até</label>
+          <input type="date" id="asoDataValidade">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria fechar-modal" style="margin-top:10px;">Cancelar</button>
+      <button type="button" class="btn-perigo btn-excluir" style="width:100%;margin-top:10px;display:none;">Excluir</button>
+    </form>
+  </div>
+</div>
+
+<!-- EPI -->
+<div class="modal-fundo" id="modalEpi" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalEpi">Novo EPI</h2>
+    <form id="formEpi">
+      <input type="hidden" id="epiId">
+
+      <label>Funcionário</label>
+      <select id="epiFuncionario" required></select>
+
+      <label>Item</label>
+      <input type="text" id="epiItem" placeholder="Ex: Capacete, luva, cinto de segurança" required>
+
+      <div class="linha-2">
+        <div>
+          <label>Data de entrega</label>
+          <input type="date" id="epiDataEntrega" required>
+        </div>
+        <div>
+          <label>Validade (se houver)</label>
+          <input type="date" id="epiValidade">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria fechar-modal" style="margin-top:10px;">Cancelar</button>
+      <button type="button" class="btn-perigo btn-excluir" style="width:100%;margin-top:10px;display:none;">Excluir</button>
+    </form>
+  </div>
+</div>
+
+<!-- Treinamento -->
+<div class="modal-fundo" id="modalTreinamento" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalTreinamento">Novo treinamento</h2>
+    <form id="formTreinamento">
+      <input type="hidden" id="treinamentoId">
+
+      <label>Funcionário</label>
+      <select id="treinamentoFuncionario" required></select>
+
+      <label>Norma / treinamento</label>
+      <input type="text" id="treinamentoNorma" placeholder="Ex: NR-35 Trabalho em Altura" required>
+
+      <div class="linha-2">
+        <div>
+          <label>Data de realização</label>
+          <input type="date" id="treinamentoDataRealizacao" required>
+        </div>
+        <div>
+          <label>Válido até</label>
+          <input type="date" id="treinamentoDataValidade">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria fechar-modal" style="margin-top:10px;">Cancelar</button>
+      <button type="button" class="btn-perigo btn-excluir" style="width:100%;margin-top:10px;display:none;">Excluir</button>
+    </form>
+  </div>
+</div>
+
+<!-- Ocorrência -->
+<div class="modal-fundo" id="modalOcorrencia" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalOcorrencia">Nova ocorrência</h2>
+    <form id="formOcorrencia">
+      <input type="hidden" id="ocorrenciaId">
+
+      <label>Obra</label>
+      <select id="ocorrenciaObra" required></select>
+
+      <label>Funcionário envolvido (opcional)</label>
+      <select id="ocorrenciaFuncionario">
+        <option value="">Não especificado</option>
+      </select>
+
+      <label>Descrição</label>
+      <input type="text" id="ocorrenciaDescricao" placeholder="O que aconteceu" required>
+
+      <label>Data</label>
+      <input type="date" id="ocorrenciaData" required>
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria fechar-modal" style="margin-top:10px;">Cancelar</button>
+      <button type="button" class="btn-perigo btn-excluir" style="width:100%;margin-top:10px;display:none;">Excluir</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/sst.js"></script>
+</body>
+</html>

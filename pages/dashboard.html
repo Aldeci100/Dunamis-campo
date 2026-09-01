@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <h1>Painel</h1>
+    <a href="#" class="voltar" onclick="sair()">Sair</a>
+  </div>
+
+  <div class="vazio" id="avisoSemPapel" style="display:none;">
+    🔒<br><br>
+    Seu usuário ainda não tem permissão configurada.<br>
+    Peça para o administrador liberar seu acesso.
+  </div>
+
+  <div class="grade-cards" id="gradeCards">
+    <a href="obras.html" class="card-modulo" data-papeis="admin">
+      <div class="icone">🏗️</div>
+      <div class="titulo">Obras</div>
+      <div class="desc">Cadastro e status</div>
+    </a>
+
+    <a href="ponto.html" class="card-modulo" data-papeis="campo">
+      <div class="icone">📍</div>
+      <div class="titulo">Ponto</div>
+      <div class="desc">Check-in / check-out</div>
+    </a>
+
+    <a href="funcionarios.html" class="card-modulo" data-papeis="rh">
+      <div class="icone">👷</div>
+      <div class="titulo">Funcionários</div>
+      <div class="desc">Cadastro e benefícios</div>
+    </a>
+
+    <a href="sst.html" class="card-modulo" data-papeis="sst">
+      <div class="icone">🦺</div>
+      <div class="titulo">SST</div>
+      <div class="desc">ASO, EPI, treinamentos, ocorrências</div>
+    </a>
+
+    <a href="despesas.html" class="card-modulo" data-papeis="financeiro">
+      <div class="icone">💰</div>
+      <div class="titulo">Despesas</div>
+      <div class="desc">Material, transporte, contas por obra</div>
+    </a>
+
+    <a href="financeiro.html" class="card-modulo" data-papeis="financeiro">
+      <div class="icone">📊</div>
+      <div class="titulo">Financeiro</div>
+      <div class="desc">Fechamento e custo por obra</div>
+    </a>
+
+    <a href="usuarios.html" class="card-modulo" data-papeis="">
+      <div class="icone">🔑</div>
+      <div class="titulo">Usuários</div>
+      <div class="desc">Liberar acesso por setor</div>
+    </a>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/modules/dashboard.js"></script>
+</body>
+</html>

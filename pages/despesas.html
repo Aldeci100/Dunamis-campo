@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Despesas — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Despesas</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <label>Obra</label>
+  <select id="filtroObra">
+    <option value="">Todas as obras</option>
+  </select>
+
+  <div class="ponto-status" style="margin-top:16px;padding:16px;">
+    <div class="sub">Total no filtro atual</div>
+    <div class="grande" id="totalFiltrado" style="font-size:24px;">R$ 0,00</div>
+  </div>
+
+  <div id="listaDespesas" class="lista"></div>
+</div>
+
+<div class="fab" id="btnNovaDespesa">+</div>
+
+<div class="modal-fundo" id="modalDespesa" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalDespesa">Nova despesa</h2>
+    <form id="formDespesa">
+      <input type="hidden" id="despesaId">
+
+      <label>Obra</label>
+      <select id="despesaObra" required>
+        <option value="">Selecione a obra</option>
+      </select>
+
+      <label>Tipo</label>
+      <select id="despesaTipo">
+        <option value="material">Material</option>
+        <option value="transporte">Transporte</option>
+        <option value="aluguel">Aluguel</option>
+        <option value="agua">Água</option>
+        <option value="luz">Luz</option>
+        <option value="outros">Outros</option>
+      </select>
+
+      <label>Descrição</label>
+      <input type="text" id="despesaDescricao" placeholder="Ex: Compra de cimento">
+
+      <div class="linha-2">
+        <div>
+          <label>Valor (R$)</label>
+          <input type="number" id="despesaValor" step="0.01" min="0" required>
+        </div>
+        <div>
+          <label>Data</label>
+          <input type="date" id="despesaData" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarDespesa">Cancelar</button>
+      <button type="button" class="btn-perigo" style="width:100%;margin-top:10px;display:none;" id="btnExcluirDespesa">Excluir despesa</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/despesas.js"></script>
+</body>
+</html>

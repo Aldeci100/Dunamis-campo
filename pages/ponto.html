@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ponto — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Ponto</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <label>Funcionário</label>
+  <select id="pontoFuncionario"></select>
+
+  <label>Obra</label>
+  <select id="pontoObra"></select>
+
+  <div class="ponto-status" style="margin-top:20px;">
+    <div class="sub" id="pontoUltimoRegistro">Nenhum registro hoje</div>
+    <div class="grande" id="pontoHoraAtual">--:--</div>
+    <input type="text" id="pontoPin" maxlength="4" inputmode="numeric" placeholder="Seu PIN" style="margin-top:14px;text-align:center;letter-spacing:4px;">
+    <button id="btnBaterPonto" class="btn-ponto btn-entrada" disabled>Marcar entrada</button>
+    <div class="geo-info" id="pontoGeoInfo">Selecione o funcionário e a obra para começar.</div>
+  </div>
+
+  <label style="margin-top:24px;">Registros de hoje</label>
+  <div id="listaPontosHoje" class="lista"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/ponto.js"></script>
+</body>
+</html>

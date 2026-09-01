@@ -1,0 +1,92 @@
+// Regras de segurança do Firestore — Dunamis Services.
+//
+// Como aplicar: Console do Firebase → Firestore Database → Regras →
+// cole este conteúdo → Publicar.
+//
+// Controle por papel: o acesso de cada pessoa depende do documento
+// usuarios/{email dela em minúsculo}, que guarda o campo "papel"
+// (admin | rh | sst | financeiro | campo). Quem gerencia isso é a tela
+// pages/usuarios.html, só acessível para quem já é admin.
+//
+// "admin" sempre tem acesso total. Os demais só leem/escrevem o que
+// está liberado para o papel deles abaixo.
+//
+// IMPORTANTE (bootstrap): antes de existir qualquer admin, ninguém
+// consegue criar o primeiro usuarios/{email} pelo app (a regra de
+// escrita exige já ser admin). Crie o primeiro documento manualmente
+// aqui no Console: Firestore Database → Iniciar coleção "usuarios" →
+// ID do documento = seu e-mail em minúsculo → campo "papel" = "admin".
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado() {
+      return request.auth != null;
+    }
+
+    function emailAtual() {
+      return request.auth.token.email.lower();
+    }
+
+    function papelAtual() {
+      return get(/databases/$(database)/documents/usuarios/$(emailAtual())).data.papel;
+    }
+
+    function ehAdmin() {
+      return logado() && papelAtual() == 'admin';
+    }
+
+    function temPapel(papeis) {
+      return logado() && (papelAtual() == 'admin' || papelAtual() in papeis);
+    }
+
+    match /usuarios/{email} {
+      allow read: if logado() && (emailAtual() == email || ehAdmin());
+      allow write: if ehAdmin();
+    }
+
+    match /obras/{id} {
+      allow read: if temPapel(['rh', 'sst', 'financeiro', 'campo']);
+      allow write: if ehAdmin();
+    }
+
+    match /funcionarios/{id} {
+      allow read: if temPapel(['rh', 'sst', 'financeiro', 'campo']);
+      allow create, update: if temPapel(['rh']);
+      allow delete: if ehAdmin();
+    }
+
+    match /pontos/{id} {
+      allow read: if temPapel(['rh', 'financeiro', 'campo']);
+      allow write: if temPapel(['campo']);
+    }
+
+    match /alocacoes/{id} {
+      allow read, write: if temPapel(['rh']);
+    }
+
+    match /despesas/{id} {
+      allow read, create, update: if temPapel(['financeiro']);
+      allow delete: if ehAdmin();
+    }
+
+    match /aso/{id} {
+      allow read, write: if temPapel(['sst']);
+    }
+
+    match /epis/{id} {
+      allow read, write: if temPapel(['sst']);
+    }
+
+    match /treinamentos/{id} {
+      allow read, write: if temPapel(['sst']);
+    }
+
+    match /ocorrencias/{id} {
+      allow read, write: if temPapel(['sst']);
+    }
+
+  }
+}
