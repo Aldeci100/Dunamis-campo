@@ -17,6 +17,8 @@ let obrasCache = [];
 let funcionariosCache = [];
 let pontosCache = [];
 let despesasCache = [];
+let anexosCache = [];
+let obraAnexosAtual = null;
 
 const rotuloStatus = {
     planejada: "Planejada",
@@ -60,7 +62,10 @@ function renderizarObras(obras) {
                 ${o.dataInicio ? "Início: " + formatarData(o.dataInicio) : ""}
                 ${o.dataFim ? " · Previsão: " + formatarData(o.dataFim) : ""}
             </div>` : ""}
-            <button type="button" class="btn-secundaria btn-relatorio" data-id="${o.id}" style="margin-top:10px;">📄 Gerar relatório</button>
+            <div class="linha-2" style="margin-top:10px;">
+                <button type="button" class="btn-secundaria btn-relatorio" data-id="${o.id}">📄 Relatório</button>
+                <button type="button" class="btn-secundaria btn-anexos" data-id="${o.id}">📎 Anexos</button>
+            </div>
         </div>
     `).join("");
 
@@ -72,6 +77,13 @@ function renderizarObras(obras) {
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
             gerarRelatorio(btn.dataset.id);
+        });
+    });
+
+    listaEl.querySelectorAll(".btn-anexos").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            abrirModalAnexos(obras.find((o) => o.id === btn.dataset.id));
         });
     });
 }
@@ -258,9 +270,78 @@ function gerarRelatorio(obraId) {
     janela.document.close();
 }
 
+// ---------- Anexos (notas fiscais, orçamentos) ----------
+
+const modalAnexos = document.getElementById("modalAnexos");
+const formAnexo = document.getElementById("formAnexo");
+const listaAnexosEl = document.getElementById("listaAnexosObra");
+const btnEnviarAnexo = document.getElementById("btnEnviarAnexo");
+
+function abrirModalAnexos(obra) {
+    if (!obra) return;
+    obraAnexosAtual = obra;
+    document.getElementById("anexosNomeObra").textContent = obra.nome;
+    formAnexo.reset();
+    renderizarAnexos();
+    modalAnexos.style.display = "flex";
+}
+
+function renderizarAnexos() {
+    if (!obraAnexosAtual) return;
+    const anexos = anexosCache
+        .filter((a) => a.entidadeTipo === "obra" && a.entidadeId === obraAnexosAtual.id)
+        .sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+
+    listaAnexosEl.innerHTML = htmlListaAnexos(anexos);
+
+    listaAnexosEl.querySelectorAll(".btn-excluir-anexo").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("Excluir este anexo?")) return;
+            const anexo = anexos.find((a) => a.id === btn.dataset.id);
+            await excluirAnexo(anexo);
+        });
+    });
+}
+
+document.getElementById("btnFecharAnexos").addEventListener("click", () => {
+    modalAnexos.style.display = "none";
+});
+modalAnexos.addEventListener("click", (e) => { if (e.target === modalAnexos) modalAnexos.style.display = "none"; });
+
+formAnexo.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!obraAnexosAtual) return;
+
+    const arquivo = document.getElementById("anexoArquivo").files[0];
+    if (!arquivo) return;
+
+    btnEnviarAnexo.disabled = true;
+    btnEnviarAnexo.textContent = "Enviando...";
+
+    try {
+        await enviarAnexo(
+            "obra",
+            obraAnexosAtual.id,
+            arquivo,
+            document.getElementById("anexoTipo").value,
+            document.getElementById("anexoObservacao").value.trim()
+        );
+        formAnexo.reset();
+    } catch (erro) {
+        alert("Não foi possível enviar o anexo: " + erro.message);
+    } finally {
+        btnEnviarAnexo.disabled = false;
+        btnEnviarAnexo.textContent = "Enviar anexo";
+    }
+});
+
 observarColecao(COLECAO, renderizarObras);
 observarColecao("funcionarios", (l) => { funcionariosCache = l; });
 observarColecao("pontos", (l) => { pontosCache = l; });
 observarColecao("despesas", (l) => { despesasCache = l; });
+observarColecao("anexos", (l) => {
+    anexosCache = l;
+    if (modalAnexos.style.display === "flex") renderizarAnexos();
+});
 
 })();

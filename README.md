@@ -39,6 +39,10 @@ mesmos dados, é obrigatório configurar o Firebase:
    consegue entrar em nada (nem na tela de liberar acesso dos outros).
    Depois desse primeiro, os demais usuários são liberados pela própria
    tela **Usuários** dentro do app.
+8. **(Opcional) Ative o Storage** se for usar anexos (nota fiscal,
+   orçamento) em Obras/Navios: menu **Build → Storage → Get started**
+   → modo produção → cole as regras de `storage.rules` na aba
+   **Regras** do Storage (é separada da regra do Firestore) → Publicar.
 
 ## Estrutura
 
@@ -66,6 +70,7 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   ponto pelo outro)
 - **Despesas** — material, transporte, aluguel, água, luz, por obra, com total — *financeiro*
 - **Navios** — cadastro de embarcação + vendas de mercadoria/serviço por navio, com status de pagamento — *financeiro*
+- **Anexos** — nota fiscal/orçamento anexados em Obras e Navios (botão 📎) — depende do Storage habilitado (passo 8 acima)
 - **SST** — ASO, EPI, treinamentos (NR-35 etc.) e ocorrências, com aviso de vencido/vencendo — *sst*
 - **Financeiro** — fechamento mensal por obra: cruza horas batidas no Ponto
   (× custo/hora do funcionário, cadastrado em **Funcionários**) com as
@@ -73,5 +78,6 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
 - **Usuários** — libera o acesso de cada e-mail a um setor — *admin*
 
 ## Próximos passos (ver docs/MODELO-DE-DADOS.md)
-- Upload de foto/laudo (ASO, ocorrências) — depende de Firebase Storage configurado
+- Upload de foto/laudo em SST (ASO, ocorrências) — mesma ideia dos
+  anexos de Obras/Navios, só falta ligar nessas telas também
 - Exportar o fechamento do Financeiro em PDF/planilha

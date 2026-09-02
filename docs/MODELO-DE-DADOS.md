@@ -117,6 +117,25 @@ vendas_navio/{id}
   statusPagamento "pendente" | "pago"
 ```
 
+## anexos
+Nota fiscal e orçamento, anexados em Obras (botão 📎, admin) e em
+Navios (botão 📎, financeiro). O arquivo em si vai pro **Firebase
+Storage** — precisa estar habilitado no projeto (ver
+[storage.rules](../storage.rules) e passo 8 do README). No modo local
+(sem Firebase), o arquivo fica como base64 dentro do localStorage,
+só pra testar a tela — não serve pra uso real.
+```
+anexos/{id}
+  entidadeTipo    "obra" | "navio"
+  entidadeId      string   (obraId ou navioId)
+  tipo            "nota_fiscal" | "orcamento" | "outro"
+  nomeArquivo     string
+  observacao      string
+  url             string   (link de download do Storage, ou base64 no modo local)
+  caminhoStorage  string | null   (path no Storage, usado só pra excluir; null no modo local)
+  data            date
+```
+
 ## sst (segurança do trabalho)
 Tela única com 4 abas. Cada uma com badge de vencido/vencendo/válido
 calculado a partir da data de validade (não fica salvo, é calculado

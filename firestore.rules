@@ -88,6 +88,16 @@ service cloud.firestore {
       allow delete: if ehAdmin();
     }
 
+    // Referências dos anexos (nota fiscal, orçamento) de Obras e Navios.
+    // O arquivo em si fica no Storage (ver storage.rules); aqui só o
+    // registro (nome, url, tipo). admin cobre Obras, financeiro cobre
+    // Navios — liberado pros dois em vez de checar o campo entidadeTipo
+    // porque cada tela só é alcançável por quem já tem o papel certo.
+    match /anexos/{id} {
+      allow read, create, update: if temPapel(['admin', 'financeiro']);
+      allow delete: if ehAdmin();
+    }
+
     match /aso/{id} {
       allow read, write: if temPapel(['sst']);
     }

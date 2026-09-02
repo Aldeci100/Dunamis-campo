@@ -1,0 +1,21 @@
+// Regras de segurança do Firebase Storage — Dunamis Services.
+//
+// Como aplicar: Console do Firebase → Storage → aba "Regras" →
+// cole este conteúdo → Publicar. (É uma tela diferente da regra do
+// Firestore — Storage e Firestore têm cada um a sua.)
+//
+// Aqui só checa se a pessoa está logada — o controle fino por papel
+// já acontece antes, na coleção "anexos" do Firestore (quem não tem
+// papel certo nem consegue criar o registro do anexo pra saber o
+// caminho do arquivo). Manter simples aqui evita duplicar a lógica de
+// papéis dentro do Storage, que não foi feito pra isso.
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /anexos/{tipoEntidade}/{entidadeId}/{arquivo} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

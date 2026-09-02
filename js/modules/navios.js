@@ -20,7 +20,9 @@ const rotuloPagamento = { pendente: "Pendente", pago: "Pago" };
 
 let naviosCache = [];
 let vendasCache = [];
+let anexosCache = [];
 let navioVendasAtual = null;
+let navioAnexosAtual = null;
 
 function formatarMoeda(valor) {
     return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -59,6 +61,7 @@ function renderizarNavios() {
                 <button type="button" class="btn-secundaria btn-editar-navio" data-id="${n.id}">✏️ Editar</button>
                 <button type="button" class="btn-secundaria btn-vendas" data-id="${n.id}">💰 Vendas</button>
             </div>
+            <button type="button" class="btn-secundaria btn-anexos" data-id="${n.id}" style="margin-top:8px;">📎 Anexos</button>
         </div>
     `).join("");
 
@@ -68,6 +71,10 @@ function renderizarNavios() {
 
     listaEl.querySelectorAll(".btn-vendas").forEach((btn) => {
         btn.addEventListener("click", () => abrirModalVendas(naviosCache.find((n) => n.id === btn.dataset.id)));
+    });
+
+    listaEl.querySelectorAll(".btn-anexos").forEach((btn) => {
+        btn.addEventListener("click", () => abrirModalAnexos(naviosCache.find((n) => n.id === btn.dataset.id)));
     });
 }
 
@@ -204,6 +211,71 @@ formVenda.addEventListener("submit", async (e) => {
     document.getElementById("vendaData").value = new Date().toISOString().slice(0, 10);
 });
 
+// ---------- Anexos (notas fiscais, orçamentos) ----------
+
+const modalAnexos = document.getElementById("modalAnexos");
+const formAnexo = document.getElementById("formAnexo");
+const listaAnexosEl = document.getElementById("listaAnexosNavio");
+const btnEnviarAnexo = document.getElementById("btnEnviarAnexo");
+
+function abrirModalAnexos(navio) {
+    if (!navio) return;
+    navioAnexosAtual = navio;
+    document.getElementById("anexosNomeNavio").textContent = navio.nome;
+    formAnexo.reset();
+    renderizarAnexos();
+    modalAnexos.style.display = "flex";
+}
+
+function renderizarAnexos() {
+    if (!navioAnexosAtual) return;
+    const anexos = anexosCache
+        .filter((a) => a.entidadeTipo === "navio" && a.entidadeId === navioAnexosAtual.id)
+        .sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+
+    listaAnexosEl.innerHTML = htmlListaAnexos(anexos);
+
+    listaAnexosEl.querySelectorAll(".btn-excluir-anexo").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("Excluir este anexo?")) return;
+            const anexo = anexos.find((a) => a.id === btn.dataset.id);
+            await excluirAnexo(anexo);
+        });
+    });
+}
+
+document.getElementById("btnFecharAnexos").addEventListener("click", () => {
+    modalAnexos.style.display = "none";
+});
+modalAnexos.addEventListener("click", (e) => { if (e.target === modalAnexos) modalAnexos.style.display = "none"; });
+
+formAnexo.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!navioAnexosAtual) return;
+
+    const arquivo = document.getElementById("anexoArquivo").files[0];
+    if (!arquivo) return;
+
+    btnEnviarAnexo.disabled = true;
+    btnEnviarAnexo.textContent = "Enviando...";
+
+    try {
+        await enviarAnexo(
+            "navio",
+            navioAnexosAtual.id,
+            arquivo,
+            document.getElementById("anexoTipo").value,
+            document.getElementById("anexoObservacao").value.trim()
+        );
+        formAnexo.reset();
+    } catch (erro) {
+        alert("Não foi possível enviar o anexo: " + erro.message);
+    } finally {
+        btnEnviarAnexo.disabled = false;
+        btnEnviarAnexo.textContent = "Enviar anexo";
+    }
+});
+
 observarColecao(COLECAO, (navios) => {
     naviosCache = navios;
     renderizarNavios();
@@ -213,6 +285,11 @@ observarColecao(COLECAO_VENDAS, (vendas) => {
     vendasCache = vendas;
     renderizarNavios();
     if (modalVendas.style.display === "flex") renderizarVendas();
+});
+
+observarColecao("anexos", (anexos) => {
+    anexosCache = anexos;
+    if (modalAnexos.style.display === "flex") renderizarAnexos();
 });
 
 })();
