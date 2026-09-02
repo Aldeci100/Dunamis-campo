@@ -88,7 +88,7 @@ function abrirEdicao(navio) {
     document.getElementById("navioPorto").value = navio.porto || "";
     document.getElementById("navioObservacoes").value = navio.observacoes || "";
     document.getElementById("tituloModalNavio").textContent = "Editar navio";
-    btnExcluir.style.display = papelUsuario === "admin" ? "block" : "none";
+    btnExcluir.style.display = papeisUsuario.includes("admin") ? "block" : "none";
     modal.style.display = "flex";
 }
 
@@ -163,7 +163,7 @@ function renderizarVendas() {
                     <span class="selo ${v.statusPagamento === "pago" ? "selo-ativo" : "selo-afastado"}">${formatarMoeda(v.valorTotal)}</span>
                 </div>
                 <div class="sub" style="margin-top:6px;">Pagamento: ${rotuloPagamento[v.statusPagamento] || v.statusPagamento}</div>
-                ${papelUsuario === "admin" ? `<button type="button" class="btn-perigo btn-excluir-venda" data-id="${v.id}" style="margin-top:8px;padding:8px 12px;font-size:12px;">Excluir</button>` : ""}
+                ${papeisUsuario.includes("admin") ? `<button type="button" class="btn-perigo btn-excluir-venda" data-id="${v.id}" style="margin-top:8px;padding:8px 12px;font-size:12px;">Excluir</button>` : ""}
             </div>
         `).join("")
         : '<div class="vazio">Nenhuma venda lançada ainda.</div>';

@@ -141,7 +141,7 @@ function abrirEdicao(f) {
     document.getElementById("funcValeAlimentacao").checked = !!f.beneficios?.valeAlimentacao;
     document.getElementById("funcMotivoExclusao").value = f.beneficios?.motivoExclusao || "";
     document.getElementById("tituloModalFuncionario").textContent = "Editar funcionário";
-    btnExcluir.style.display = papelUsuario === "admin" ? "block" : "none";
+    btnExcluir.style.display = papeisUsuario.includes("admin") ? "block" : "none";
     modal.style.display = "flex";
 }
 

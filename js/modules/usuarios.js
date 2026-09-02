@@ -1,5 +1,5 @@
 // =====================================
-// MÓDULO USUÁRIOS (admin) — controla o papel/setor de cada pessoa
+// MÓDULO USUÁRIOS (admin) — controla os papéis/setores de cada pessoa
 // =====================================
 
 const COLECAO = "usuarios";
@@ -9,6 +9,7 @@ const modal = document.getElementById("modalUsuario");
 const form = document.getElementById("formUsuario");
 const btnExcluir = document.getElementById("btnExcluirUsuario");
 const campoEmail = document.getElementById("usuarioEmail");
+const checkboxesPapel = form.querySelectorAll('input[type="checkbox"][id^="papel"]');
 
 const rotuloPapel = {
     admin: "Administrador",
@@ -26,17 +27,20 @@ function renderizarUsuarios(usuarios) {
 
     usuarios.sort((a, b) => (a.nome || a.id).localeCompare(b.nome || b.id));
 
-    listaEl.innerHTML = usuarios.map((u) => `
+    listaEl.innerHTML = usuarios.map((u) => {
+        const papeis = normalizarPapeis(u.papel) || [];
+        const selos = papeis.map((p) => `<span class="selo selo-ativo">${rotuloPapel[p] || p}</span>`).join(" ");
+        return `
         <div class="item" data-id="${u.id}">
             <div class="linha-topo">
                 <div>
                     <div class="nome">${u.nome || u.id}</div>
                     <div class="sub">${u.id}</div>
                 </div>
-                <span class="selo selo-ativo">${rotuloPapel[u.papel] || u.papel}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">${selos}</div>
             </div>
-        </div>
-    `).join("");
+        </div>`;
+    }).join("");
 
     listaEl.querySelectorAll(".item").forEach((el) => {
         el.addEventListener("click", () => abrirEdicao(usuarios.find((u) => u.id === el.dataset.id)));
@@ -57,7 +61,10 @@ function abrirEdicao(u) {
     campoEmail.value = u.id;
     campoEmail.disabled = true;
     document.getElementById("usuarioNome").value = u.nome || "";
-    document.getElementById("usuarioPapel").value = u.papel || "campo";
+
+    const papeis = normalizarPapeis(u.papel) || [];
+    checkboxesPapel.forEach((cb) => { cb.checked = papeis.includes(cb.value); });
+
     document.getElementById("tituloModalUsuario").textContent = "Editar acesso";
     btnExcluir.style.display = "block";
     modal.style.display = "flex";
@@ -74,10 +81,16 @@ modal.addEventListener("click", (e) => { if (e.target === modal) fecharModal(); 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    const papeisSelecionados = Array.from(checkboxesPapel).filter((cb) => cb.checked).map((cb) => cb.value);
+    if (!papeisSelecionados.length) {
+        alert("Marque pelo menos um setor/papel.");
+        return;
+    }
+
     const email = campoEmail.value.trim().toLowerCase();
     const dados = {
         nome: document.getElementById("usuarioNome").value.trim(),
-        papel: document.getElementById("usuarioPapel").value,
+        papel: papeisSelecionados,
     };
 
     await salvarDocumento(COLECAO, dados, email);

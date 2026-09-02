@@ -109,7 +109,7 @@ function abrirEdicao(d) {
     document.getElementById("despesaValor").value = d.valor ?? "";
     document.getElementById("despesaData").value = d.data || "";
     document.getElementById("tituloModalDespesa").textContent = "Editar despesa";
-    btnExcluir.style.display = papelUsuario === "admin" ? "block" : "none";
+    btnExcluir.style.display = papeisUsuario.includes("admin") ? "block" : "none";
     modal.style.display = "flex";
 }
 

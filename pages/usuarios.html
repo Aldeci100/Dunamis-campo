@@ -16,10 +16,11 @@
   </div>
 
   <p class="aviso" style="text-align:left;margin-top:0;">
-    Aqui você define o que cada pessoa pode acessar. A conta de login
-    (e-mail/senha) precisa ser criada antes no
-    <strong>Console do Firebase → Authentication</strong> — aqui você só
-    libera o acesso dela aos módulos do sistema.
+    ⚠️ Aqui você <strong>não</strong> cria a senha de ninguém — só libera
+    o que a pessoa pode acessar. A senha de login é criada à parte, no
+    <strong>Console do Firebase → Authentication → Add user</strong>
+    (mesmo e-mail que você vai cadastrar aqui embaixo). Sem os dois
+    passos feitos, a pessoa não consegue entrar.
   </p>
 
   <div id="listaUsuarios" class="lista"></div>
@@ -39,14 +40,27 @@
       <label>Nome</label>
       <input type="text" id="usuarioNome">
 
-      <label>Setor / papel</label>
-      <select id="usuarioPapel">
-        <option value="admin">Administrador (acesso total)</option>
-        <option value="rh">RH</option>
-        <option value="sst">Segurança do Trabalho (SST)</option>
-        <option value="financeiro">Financeiro</option>
-        <option value="campo">Campo (ponto)</option>
-      </select>
+      <label>Setores / papéis (pode marcar mais de um)</label>
+      <div class="check">
+        <input type="checkbox" id="papelAdmin" value="admin">
+        <label style="margin:0;" for="papelAdmin">Administrador (acesso total)</label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="papelRh" value="rh">
+        <label style="margin:0;" for="papelRh">RH</label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="papelSst" value="sst">
+        <label style="margin:0;" for="papelSst">Segurança do Trabalho (SST)</label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="papelFinanceiro" value="financeiro">
+        <label style="margin:0;" for="papelFinanceiro">Financeiro</label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="papelCampo" value="campo">
+        <label style="margin:0;" for="papelCampo">Campo (ponto)</label>
+      </div>
 
       <button type="submit" class="btn-primaria">Salvar</button>
       <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarUsuario">Cancelar</button>

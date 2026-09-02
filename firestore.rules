@@ -4,12 +4,13 @@
 // cole este conteúdo → Publicar.
 //
 // Controle por papel: o acesso de cada pessoa depende do documento
-// usuarios/{email dela em minúsculo}, que guarda o campo "papel"
-// (admin | rh | sst | financeiro | campo). Quem gerencia isso é a tela
+// usuarios/{email dela em minúsculo}, campo "papel" — pode ser um só
+// (string, ex: "rh") ou vários (lista, ex: ["rh", "campo"]), uma
+// pessoa pode acumular mais de um setor. Quem gerencia isso é a tela
 // pages/usuarios.html, só acessível para quem já é admin.
 //
 // "admin" sempre tem acesso total. Os demais só leem/escrevem o que
-// está liberado para o papel deles abaixo.
+// está liberado para pelo menos um dos papéis deles abaixo.
 //
 // IMPORTANTE (bootstrap): antes de existir qualquer admin, ninguém
 // consegue criar o primeiro usuarios/{email} pelo app (a regra de
@@ -30,16 +31,17 @@ service cloud.firestore {
       return request.auth.token.email.lower();
     }
 
-    function papelAtual() {
-      return get(/databases/$(database)/documents/usuarios/$(emailAtual())).data.papel;
+    function papeisAtual() {
+      let bruto = get(/databases/$(database)/documents/usuarios/$(emailAtual())).data.papel;
+      return bruto is list ? bruto : [bruto];
     }
 
     function ehAdmin() {
-      return logado() && papelAtual() == 'admin';
+      return logado() && ('admin' in papeisAtual());
     }
 
     function temPapel(papeis) {
-      return logado() && (papelAtual() == 'admin' || papelAtual() in papeis);
+      return logado() && (ehAdmin() || papeisAtual().hasAny(papeis));
     }
 
     match /usuarios/{email} {

@@ -164,7 +164,11 @@ sabendo só o e-mail — sem precisar ir atrás do UID no Authentication.
 ```
 usuarios/{email}
   nome    string
-  papel   "admin" | "rh" | "sst" | "financeiro" | "campo"
+  papel   ("admin" | "rh" | "sst" | "financeiro" | "campo")[]
+          (lista — uma pessoa pode ter mais de um papel, ex: ["rh","campo"].
+          Documentos antigos gravados como string única continuam
+          funcionando: o app e as regras normalizam pra lista na hora
+          de ler.)
 ```
 
 ## Usuários e papéis
@@ -172,6 +176,10 @@ usuarios/{email}
 A conta de login (e-mail/senha) é criada no **Console do Firebase →
 Authentication** — isso continua manual, fora do app. O que o app
 controla é *o que essa conta pode acessar*, via `usuarios/{email}`.
+São duas coisas separadas de propósito: a tela Usuários não tem campo
+de senha. Uma pessoa pode marcar mais de um papel (ex: RH + Campo) —
+quem tem "admin" sempre vê tudo, independente dos outros papéis
+marcados.
 
 | Papel | Acessa |
 |---|---|
