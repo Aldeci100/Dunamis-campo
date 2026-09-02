@@ -294,6 +294,12 @@ function renderizarAnexos() {
 
     listaAnexosEl.innerHTML = htmlListaAnexos(anexos);
 
+    listaAnexosEl.querySelectorAll(".btn-abrir-anexo").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            abrirAnexoVisualizacao(anexos.find((a) => a.id === btn.dataset.id));
+        });
+    });
+
     listaAnexosEl.querySelectorAll(".btn-excluir-anexo").forEach((btn) => {
         btn.addEventListener("click", async () => {
             if (!confirm("Excluir este anexo?")) return;

@@ -50,6 +50,48 @@ async function excluirAnexo(anexo) {
     await removerDocumento("anexos", anexo.id);
 }
 
+// Não navega direto pro data: URL — Chrome/Edge bloqueiam navegação de
+// página inteira pra data: URL por segurança (fica em branco, mesmo
+// com o arquivo correto). Em vez disso abre uma página nova que
+// exibe o conteúdo dentro de <img>/<iframe>, o que não é bloqueado.
+function abrirAnexoVisualizacao(anexo) {
+    const match = anexo.url.match(/^data:([^;]+);/);
+    const mime = match ? match[1] : "";
+
+    let corpo;
+    if (mime.startsWith("image/")) {
+        corpo = `<img src="${anexo.url}" alt="${anexo.nomeArquivo}">`;
+    } else if (mime === "application/pdf") {
+        corpo = `<iframe src="${anexo.url}"></iframe>`;
+    } else {
+        corpo = `<p>Não dá pra pré-visualizar esse tipo de arquivo aqui.</p>
+                 <a href="${anexo.url}" download="${anexo.nomeArquivo}">Baixar ${anexo.nomeArquivo}</a>`;
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>${anexo.nomeArquivo}</title>
+<style>
+  body { margin: 0; background: #111; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  img { max-width: 100%; max-height: 100vh; display: block; }
+  iframe { width: 100vw; height: 100vh; border: none; }
+  p, a { color: #fff; font-family: system-ui, sans-serif; text-align: center; }
+</style>
+</head>
+<body>${corpo}</body>
+</html>`;
+
+    const janela = window.open("", "_blank");
+    if (!janela) {
+        alert("Não foi possível abrir o anexo. Verifique se o navegador bloqueou o pop-up.");
+        return;
+    }
+    janela.document.write(html);
+    janela.document.close();
+}
+
 function htmlListaAnexos(anexos) {
     if (!anexos.length) return '<div class="vazio">Nenhum anexo ainda.</div>';
 
@@ -62,7 +104,7 @@ function htmlListaAnexos(anexos) {
                 </div>
             </div>
             <div class="linha-2" style="margin-top:10px;">
-                <a href="${a.url}" target="_blank" rel="noopener" class="btn-secundaria" style="text-align:center;text-decoration:none;line-height:2.2;">Abrir</a>
+                <button type="button" class="btn-secundaria btn-abrir-anexo" data-id="${a.id}">Abrir</button>
                 <button type="button" class="btn-perigo btn-excluir-anexo" data-id="${a.id}">Excluir</button>
             </div>
         </div>
