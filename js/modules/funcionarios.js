@@ -37,12 +37,50 @@ function formatarDataIso(iso) {
 }
 
 let obrasCache = [];
+let funcionariosCache = [];
 let pontosCache = [];
 let abonosCache = [];
 let funcionarioEspelhoAtual = null;
 let funcionarioAbonoAtual = null;
 
+function renderizarResumo() {
+    const ativos = funcionariosCache.filter((f) => f.status === "ativo");
+    document.getElementById("totalFuncionariosAtivos").textContent = ativos.length;
+
+    const afastados = funcionariosCache.filter((f) => f.status === "afastado").length;
+    const inativos = funcionariosCache.filter((f) => f.status === "inativo").length;
+    const extras = [];
+    if (afastados) extras.push(`${afastados} afastado${afastados > 1 ? "s" : ""}`);
+    if (inativos) extras.push(`${inativos} inativo${inativos > 1 ? "s" : ""}`);
+    document.getElementById("totalFuncionariosOutros").textContent = extras.join(" · ");
+
+    const porObra = {};
+    let semObra = 0;
+    ativos.forEach((f) => {
+        if (f.obraAtualId) porObra[f.obraAtualId] = (porObra[f.obraAtualId] || 0) + 1;
+        else semObra++;
+    });
+
+    const linhas = Object.entries(porObra)
+        .map(([obraId, qtd]) => ({
+            nome: obrasCache.find((o) => o.id === obraId)?.nome || "Obra removida",
+            qtd,
+        }))
+        .sort((a, b) => b.qtd - a.qtd);
+
+    if (semObra) linhas.push({ nome: "Sem obra no momento", qtd: semObra });
+
+    document.getElementById("resumoPorObra").innerHTML = linhas.length
+        ? linhas.map((l) => `<div style="display:flex;justify-content:space-between;padding:3px 0;">
+              <span>${l.nome}</span><b style="color:var(--text);">${l.qtd}</b>
+          </div>`).join("")
+        : "";
+}
+
 function renderizarFuncionarios(funcionarios) {
+    funcionariosCache = funcionarios;
+    renderizarResumo();
+
     if (!funcionarios.length) {
         listaEl.innerHTML = '<div class="vazio">Nenhum funcionário cadastrado ainda.<br>Toque no + para adicionar.</div>';
         return;
@@ -395,6 +433,7 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
 observarColecao("obras", (obras) => {
     obrasCache = obras;
     preencherSelectObras();
+    renderizarResumo();
 });
 
 observarColecao("pontos", (pontos) => {
