@@ -1,13 +1,17 @@
 // =====================================================
 // ANEXOS (notas fiscais, orçamentos) — usado em Obras e Navios
 // =====================================================
-// Na nuvem, o arquivo vai pro Firebase Storage e só a referência
-// (nome, url, caminho) fica no Firestore, coleção "anexos".
+// Guarda o arquivo direto dentro do documento no Firestore, como
+// base64 — não depende do Firebase Storage, que hoje só está
+// disponível no plano pago (Blaze) do Firebase.
 //
-// No modo local (sem Firebase configurado), não existe Storage —
-// o arquivo é guardado como base64 dentro do próprio localStorage,
-// só pra dar pra testar a tela. Arquivo grande pode estourar o
-// limite do navegador nesse modo; na nuvem não tem esse problema.
+// Por causa disso tem um limite de tamanho: o Firestore não aceita
+// documento maior que 1MB, e o base64 deixa o arquivo ~33% maior.
+// Serve bem pra PDF de nota fiscal/orçamento simples ou foto com
+// resolução baixa/média; não serve pra arquivo grande (vídeo, PDF
+// com muitas páginas escaneadas em alta resolução etc.).
+
+const TAMANHO_MAXIMO_ANEXO = 700 * 1024; // ~700KB de folga pro limite de 1MB do Firestore
 
 const ROTULO_TIPO_ANEXO = {
     nota_fiscal: "Nota fiscal",
@@ -16,43 +20,33 @@ const ROTULO_TIPO_ANEXO = {
 };
 
 function enviarAnexo(entidadeTipo, entidadeId, arquivo, tipo, observacao) {
-    const dadosComuns = {
-        entidadeTipo,
-        entidadeId,
-        tipo,
-        observacao: observacao || "",
-        nomeArquivo: arquivo.name,
-        data: new Date().toISOString().slice(0, 10),
-    };
-
-    if (!firebaseConfigurado) {
-        return new Promise((resolve, reject) => {
-            const leitor = new FileReader();
-            leitor.onload = () => {
-                salvarDocumento("anexos", { ...dadosComuns, url: leitor.result, caminhoStorage: null })
-                    .then(resolve)
-                    .catch(reject);
-            };
-            leitor.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
-            leitor.readAsDataURL(arquivo);
-        });
+    if (arquivo.size > TAMANHO_MAXIMO_ANEXO) {
+        return Promise.reject(new Error(
+            `Arquivo de ${(arquivo.size / 1024).toFixed(0)}KB é maior que o limite de ` +
+            `${(TAMANHO_MAXIMO_ANEXO / 1024).toFixed(0)}KB. Tente um PDF mais simples ou ` +
+            `uma foto com resolução menor.`
+        ));
     }
 
-    const caminho = `anexos/${entidadeTipo}/${entidadeId}/${Date.now()}_${arquivo.name}`;
-    const ref = firebase.storage().ref(caminho);
-    return ref.put(arquivo)
-        .then(() => ref.getDownloadURL())
-        .then((url) => salvarDocumento("anexos", { ...dadosComuns, url, caminhoStorage: caminho }));
+    return new Promise((resolve, reject) => {
+        const leitor = new FileReader();
+        leitor.onload = () => {
+            salvarDocumento("anexos", {
+                entidadeTipo,
+                entidadeId,
+                tipo,
+                observacao: observacao || "",
+                nomeArquivo: arquivo.name,
+                url: leitor.result,
+                data: new Date().toISOString().slice(0, 10),
+            }).then(resolve).catch(reject);
+        };
+        leitor.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+        leitor.readAsDataURL(arquivo);
+    });
 }
 
 async function excluirAnexo(anexo) {
-    if (firebaseConfigurado && anexo.caminhoStorage) {
-        try {
-            await firebase.storage().ref(anexo.caminhoStorage).delete();
-        } catch (e) {
-            // arquivo já pode ter sido removido do Storage, segue o jogo
-        }
-    }
     await removerDocumento("anexos", anexo.id);
 }
 

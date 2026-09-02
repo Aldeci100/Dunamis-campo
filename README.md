@@ -39,10 +39,10 @@ mesmos dados, é obrigatório configurar o Firebase:
    consegue entrar em nada (nem na tela de liberar acesso dos outros).
    Depois desse primeiro, os demais usuários são liberados pela própria
    tela **Usuários** dentro do app.
-8. **(Opcional) Ative o Storage** se for usar anexos (nota fiscal,
-   orçamento) em Obras/Navios: menu **Build → Storage → Get started**
-   → modo produção → cole as regras de `storage.rules` na aba
-   **Regras** do Storage (é separada da regra do Firestore) → Publicar.
+Anexos (nota fiscal, orçamento) em Obras/Navios não precisam de
+nenhum passo extra — o arquivo fica guardado direto no Firestore
+(ver docs/MODELO-DE-DADOS.md). O Firebase Storage foi propositalmente
+descartado aqui porque hoje só está disponível no plano pago (Blaze).
 
 ## Estrutura
 
@@ -70,7 +70,7 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   ponto pelo outro)
 - **Despesas** — material, transporte, aluguel, água, luz, por obra, com total — *financeiro*
 - **Navios** — cadastro de embarcação + vendas de mercadoria/serviço por navio, com status de pagamento — *financeiro*
-- **Anexos** — nota fiscal/orçamento anexados em Obras e Navios (botão 📎) — depende do Storage habilitado (passo 8 acima)
+- **Anexos** — nota fiscal/orçamento anexados em Obras e Navios (botão 📎, até ~700KB, guardado no Firestore)
 - **SST** — ASO, EPI, treinamentos (NR-35 etc.) e ocorrências, com aviso de vencido/vencendo — *sst*
 - **Financeiro** — fechamento mensal por obra: cruza horas batidas no Ponto
   (× custo/hora do funcionário, cadastrado em **Funcionários**) com as

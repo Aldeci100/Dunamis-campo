@@ -119,11 +119,13 @@ vendas_navio/{id}
 
 ## anexos
 Nota fiscal e orçamento, anexados em Obras (botão 📎, admin) e em
-Navios (botão 📎, financeiro). O arquivo em si vai pro **Firebase
-Storage** — precisa estar habilitado no projeto (ver
-[storage.rules](../storage.rules) e passo 8 do README). No modo local
-(sem Firebase), o arquivo fica como base64 dentro do localStorage,
-só pra testar a tela — não serve pra uso real.
+Navios (botão 📎, financeiro). O arquivo inteiro fica dentro do
+próprio documento, em base64 — **não usa Firebase Storage**, que hoje
+só está disponível no plano pago (Blaze) do Firebase. Por causa do
+limite de 1MB por documento do Firestore, só aceita arquivo até
+~700KB (ver `TAMANHO_MAXIMO_ANEXO` em [js/anexos.js](../js/anexos.js)) —
+serve bem pra PDF simples ou foto de resolução baixa/média, não serve
+pra arquivo grande.
 ```
 anexos/{id}
   entidadeTipo    "obra" | "navio"
@@ -131,10 +133,14 @@ anexos/{id}
   tipo            "nota_fiscal" | "orcamento" | "outro"
   nomeArquivo     string
   observacao      string
-  url             string   (link de download do Storage, ou base64 no modo local)
-  caminhoStorage  string | null   (path no Storage, usado só pra excluir; null no modo local)
+  url             string   (o arquivo em si, como data URL base64)
   data            date
 ```
+
+Se um dia crescer e valer a pena migrar pro Firebase Storage (upgrade
+pro plano Blaze), dá pra reaproveitar boa parte disso — só troca como
+`enviarAnexo()` salva o arquivo, o resto (listagem, exclusão, telas)
+continua igual.
 
 ## sst (segurança do trabalho)
 Tela única com 4 abas. Cada uma com badge de vencido/vencendo/válido

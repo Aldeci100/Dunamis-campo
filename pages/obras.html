@@ -90,6 +90,10 @@
 
       <label>Arquivo</label>
       <input type="file" id="anexoArquivo" required>
+      <p class="aviso" style="text-align:left;margin-top:6px;">
+        Até ~700KB (PDF simples ou foto com resolução baixa/média).
+        Arquivo maior não é aceito.
+      </p>
 
       <button type="submit" class="btn-primaria" style="margin-top:16px;" id="btnEnviarAnexo">Enviar anexo</button>
       <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnFecharAnexos">Fechar</button>
@@ -103,7 +107,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <script src="../js/firebase-init.js"></script>
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
