@@ -16,6 +16,8 @@ const btnExcluir = document.getElementById("btnExcluirFuncionario");
 const selectObra = document.getElementById("funcObra");
 const campoSalario = document.getElementById("funcSalario");
 const campoCustoHora = document.getElementById("funcCustoHora");
+const filtroFuncObra = document.getElementById("filtroFuncObra");
+const filtroFuncStatus = document.getElementById("filtroFuncStatus");
 
 const rotuloStatus = { ativo: "Ativo", afastado: "Afastado", inativo: "Inativo" };
 const rotuloAbono = {
@@ -77,16 +79,33 @@ function renderizarResumo() {
         : "";
 }
 
+function funcionariosFiltrados() {
+    const obraId = filtroFuncObra.value;
+    const status = filtroFuncStatus.value;
+
+    return funcionariosCache.filter((f) => {
+        if (status && f.status !== status) return false;
+        if (obraId === "__sem_obra__" && f.obraAtualId) return false;
+        if (obraId && obraId !== "__sem_obra__" && f.obraAtualId !== obraId) return false;
+        return true;
+    });
+}
+
 function renderizarFuncionarios(funcionarios) {
     funcionariosCache = funcionarios;
     renderizarResumo();
+    renderizarListaFiltrada();
+}
+
+function renderizarListaFiltrada() {
+    const funcionarios = funcionariosFiltrados().sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
 
     if (!funcionarios.length) {
-        listaEl.innerHTML = '<div class="vazio">Nenhum funcionário cadastrado ainda.<br>Toque no + para adicionar.</div>';
+        listaEl.innerHTML = funcionariosCache.length
+            ? '<div class="vazio">Nenhum funcionário encontrado com esse filtro.</div>'
+            : '<div class="vazio">Nenhum funcionário cadastrado ainda.<br>Toque no + para adicionar.</div>';
         return;
     }
-
-    funcionarios.sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
 
     listaEl.innerHTML = funcionarios.map((f) => {
         const obra = obrasCache.find((o) => o.id === f.obraAtualId);
@@ -140,6 +159,22 @@ function preencherSelectObras() {
             .join("");
     selectObra.value = atual;
 }
+
+function preencherFiltroObra() {
+    const atual = filtroFuncObra.value;
+    const opcoesObras = obrasCache
+        .slice()
+        .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""))
+        .map((o) => `<option value="${o.id}">${o.nome}</option>`)
+        .join("");
+    filtroFuncObra.innerHTML = '<option value="">Todas as obras</option>' +
+        opcoesObras +
+        '<option value="__sem_obra__">Sem obra</option>';
+    filtroFuncObra.value = atual;
+}
+
+filtroFuncObra.addEventListener("change", renderizarListaFiltrada);
+filtroFuncStatus.addEventListener("change", renderizarListaFiltrada);
 
 function atualizarCustoHora() {
     const salario = Number(campoSalario.value);
@@ -433,7 +468,7 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
 // ---------- Exportar lista (Excel/CSV e PDF) ----------
 
 function funcionariosOrdenados() {
-    return funcionariosCache.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+    return funcionariosFiltrados().sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
 }
 
 function nomeObraDoFuncionario(f) {
@@ -464,7 +499,8 @@ function exportarCsv() {
 }
 
 function gerarPdfFuncionarios() {
-    const linhas = funcionariosOrdenados()
+    const ordenados = funcionariosOrdenados();
+    const linhas = ordenados
         .map((f) => `<tr><td>${f.nome || ""}</td><td>${f.cargo || "—"}</td><td>${nomeObraDoFuncionario(f)}</td><td>${rotuloStatus[f.status] || f.status}</td></tr>`)
         .join("");
 
@@ -486,7 +522,7 @@ function gerarPdfFuncionarios() {
 </head>
 <body>
   <h1>Dunamis Services — Funcionários</h1>
-  <div class="sub">Gerado em ${new Date().toLocaleString("pt-BR")} · Total: ${funcionariosCache.length}</div>
+  <div class="sub">Gerado em ${new Date().toLocaleString("pt-BR")} · Total: ${ordenados.length}</div>
   <table>
     <thead><tr><th>Nome</th><th>Função</th><th>Obra</th><th>Status</th></tr></thead>
     <tbody>${linhas || '<tr><td colspan="4">Nenhum funcionário cadastrado.</td></tr>'}</tbody>
@@ -510,7 +546,9 @@ document.getElementById("btnExportarPdf").addEventListener("click", gerarPdfFunc
 observarColecao("obras", (obras) => {
     obrasCache = obras;
     preencherSelectObras();
+    preencherFiltroObra();
     renderizarResumo();
+    renderizarListaFiltrada();
 });
 
 observarColecao("pontos", (pontos) => {

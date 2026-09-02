@@ -22,10 +22,33 @@
     <div id="resumoPorObra" style="margin-top:14px;text-align:left;font-size:13px;color:var(--text-dim);"></div>
   </div>
 
-  <div class="linha-2" style="margin-top:12px;">
+  <div class="linha-2" style="margin-top:14px;">
+    <div>
+      <label style="margin-top:0;">Obra</label>
+      <select id="filtroFuncObra">
+        <option value="">Todas as obras</option>
+        <option value="__sem_obra__">Sem obra</option>
+      </select>
+    </div>
+    <div>
+      <label style="margin-top:0;">Status</label>
+      <select id="filtroFuncStatus">
+        <option value="">Todos os status</option>
+        <option value="ativo">Ativo</option>
+        <option value="afastado">Afastado</option>
+        <option value="inativo">Inativo</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="linha-2" style="margin-top:10px;">
     <button type="button" class="btn-secundaria" id="btnExportarCsv">📊 Exportar Excel</button>
     <button type="button" class="btn-secundaria" id="btnExportarPdf">🖨️ Gerar PDF</button>
   </div>
+  <p class="aviso" style="text-align:left;margin-top:6px;">
+    A lista abaixo e a exportação seguem o filtro. O resumo no topo
+    sempre mostra o total geral da empresa.
+  </p>
 
   <div id="listaFuncionarios" class="lista"></div>
 </div>
