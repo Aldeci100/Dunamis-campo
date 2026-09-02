@@ -78,6 +78,13 @@ service cloud.firestore {
       allow delete: if ehAdmin();
     }
 
+    // Tipos de despesa criados pelo usuário (além dos fixos: material,
+    // transporte, aluguel, água, luz, outros).
+    match /tiposDespesa/{id} {
+      allow read, create, update: if temPapel(['financeiro']);
+      allow delete: if ehAdmin();
+    }
+
     match /navios/{id} {
       allow read, create, update: if temPapel(['financeiro']);
       allow delete: if ehAdmin();

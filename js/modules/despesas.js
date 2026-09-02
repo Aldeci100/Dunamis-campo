@@ -16,7 +16,7 @@ const filtroObra = document.getElementById("filtroObra");
 const selectObraModal = document.getElementById("despesaObra");
 const totalFiltradoEl = document.getElementById("totalFiltrado");
 
-const rotuloTipo = {
+const TIPOS_FIXOS = {
     material: "Material",
     transporte: "Transporte",
     aluguel: "Aluguel",
@@ -25,8 +25,70 @@ const rotuloTipo = {
     outros: "Outros",
 };
 
+const selectTipo = document.getElementById("despesaTipo");
+
 let obrasCache = [];
 let despesasCache = [];
+let tiposCustomCache = [];
+
+function rotuloTipo(tipo) {
+    if (TIPOS_FIXOS[tipo]) return TIPOS_FIXOS[tipo];
+    const custom = tiposCustomCache.find((t) => t.id === tipo);
+    return custom ? custom.nome : tipo;
+}
+
+function gerarSlugTipo(nome) {
+    return nome
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+}
+
+function preencherSelectTipo() {
+    const atual = selectTipo.value;
+
+    const opcoesFixas = Object.entries(TIPOS_FIXOS)
+        .map(([valor, rotulo]) => `<option value="${valor}">${rotulo}</option>`)
+        .join("");
+
+    const opcoesCustom = tiposCustomCache
+        .slice()
+        .sort((a, b) => a.nome.localeCompare(b.nome))
+        .map((t) => `<option value="${t.id}">${t.nome}</option>`)
+        .join("");
+
+    selectTipo.innerHTML = opcoesFixas + opcoesCustom +
+        '<option value="__novo__">+ Adicionar novo tipo...</option>';
+
+    selectTipo.value = atual || "material";
+}
+
+selectTipo.addEventListener("change", async () => {
+    if (selectTipo.value !== "__novo__") return;
+
+    const nome = prompt("Nome do novo tipo de despesa (ex: Combustível, Ferramentas):");
+    selectTipo.value = "material";
+
+    const nomeLimpo = (nome || "").trim();
+    if (!nomeLimpo) return;
+
+    const slug = gerarSlugTipo(nomeLimpo);
+    if (!slug) return;
+
+    const existeFixo = TIPOS_FIXOS[slug];
+    const existeCustom = tiposCustomCache.find((t) => t.id === slug);
+
+    if (!existeFixo && !existeCustom) {
+        tiposCustomCache.push({ id: slug, nome: nomeLimpo });
+        preencherSelectTipo();
+        await salvarDocumento("tiposDespesa", { nome: nomeLimpo }, slug);
+    }
+
+    selectTipo.value = slug;
+});
 
 function formatarMoeda(valor) {
     return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -78,7 +140,7 @@ function renderizar() {
         <div class="item" data-id="${d.id}">
             <div class="linha-topo">
                 <div>
-                    <div class="nome">${d.descricao || rotuloTipo[d.tipo] || d.tipo}</div>
+                    <div class="nome">${d.descricao || rotuloTipo(d.tipo)}</div>
                     <div class="sub">${nomeObra(d.obraId)} · ${formatarData(d.data)}</div>
                 </div>
                 <span class="selo selo-andamento">${formatarMoeda(d.valor)}</span>
@@ -149,6 +211,12 @@ btnExcluir.addEventListener("click", async () => {
 observarColecao("obras", (obras) => {
     obrasCache = obras;
     preencherSelectsObra();
+    renderizar();
+});
+
+observarColecao("tiposDespesa", (tipos) => {
+    tiposCustomCache = tipos;
+    preencherSelectTipo();
     renderizar();
 });
 

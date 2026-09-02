@@ -83,15 +83,28 @@ pontos/{id}
 
 ## despesas
 Cobre material, transporte, aluguel, água, luz — tudo rateado por obra.
+`tipo` pode ser um dos fixos abaixo ou o id de um tipo criado pelo usuário
+(ver `tiposDespesa`).
 ```
 despesas/{id}
   obraId          string
-  tipo            "material" | "transporte" | "aluguel" | "agua" | "luz" | "outros"
+  tipo            "material" | "transporte" | "aluguel" | "agua" | "luz" | "outros" | <id de tiposDespesa>
   descricao       string
   valor           number
   data            date
   comprovanteUrl  string | null
   lancadoPor      string   (funcionarioId)
+```
+
+## tiposDespesa
+Tipos de despesa extras, criados pelo usuário na tela Despesas
+("+ Adicionar novo tipo..."), além dos fixos (material/transporte/
+aluguel/água/luz/outros). O ID do documento é o nome digitado em slug
+(minúsculo, sem acento, espaços viram `_`) — é esse ID que fica salvo
+no campo `tipo` de `despesas`.
+```
+tiposDespesa/{id}
+  nome            string   (ex: "Combustível")
 ```
 
 ## navios / vendas_navio

@@ -16,7 +16,7 @@ const tituloDetalhe = document.getElementById("tituloDetalheObra");
 const listaMaoDeObraEl = document.getElementById("listaMaoDeObra");
 const listaDespesasObraEl = document.getElementById("listaDespesasObra");
 
-const rotuloTipo = {
+const TIPOS_FIXOS = {
     material: "Material", transporte: "Transporte", aluguel: "Aluguel",
     agua: "Água", luz: "Luz", outros: "Outros",
 };
@@ -25,7 +25,14 @@ let obrasCache = [];
 let funcionariosCache = [];
 let pontosCache = [];
 let despesasCache = [];
+let tiposCustomCache = [];
 let ultimoResumo = {};
+
+function rotuloTipo(tipo) {
+    if (TIPOS_FIXOS[tipo]) return TIPOS_FIXOS[tipo];
+    const custom = tiposCustomCache.find((t) => t.id === tipo);
+    return custom ? custom.nome : tipo;
+}
 
 function formatarMoeda(valor) {
     return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -207,8 +214,8 @@ function abrirDetalhe(obraId) {
             <div class="item">
                 <div class="linha-topo">
                     <div>
-                        <div class="nome">${d.descricao || rotuloTipo[d.tipo] || d.tipo}</div>
-                        <div class="sub">${rotuloTipo[d.tipo] || d.tipo}</div>
+                        <div class="nome">${d.descricao || rotuloTipo(d.tipo)}</div>
+                        <div class="sub">${rotuloTipo(d.tipo)}</div>
                     </div>
                     <span class="selo selo-andamento">${formatarMoeda(d.valor)}</span>
                 </div>
@@ -229,5 +236,6 @@ observarColecao("obras", (l) => { obrasCache = l; renderizar(); });
 observarColecao("funcionarios", (l) => { funcionariosCache = l; renderizar(); });
 observarColecao("pontos", (l) => { pontosCache = l; renderizar(); });
 observarColecao("despesas", (l) => { despesasCache = l; renderizar(); });
+observarColecao("tiposDespesa", (l) => { tiposCustomCache = l; renderizar(); });
 
 })();
