@@ -430,6 +430,83 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
     modalEspelho.style.display = "none";
 });
 
+// ---------- Exportar lista (Excel/CSV e PDF) ----------
+
+function funcionariosOrdenados() {
+    return funcionariosCache.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+}
+
+function nomeObraDoFuncionario(f) {
+    if (!f.obraAtualId) return "Sem obra";
+    return obrasCache.find((o) => o.id === f.obraAtualId)?.nome || "Obra removida";
+}
+
+function exportarCsv() {
+    const linhas = [["Nome", "Função", "Obra", "Status"]];
+    funcionariosOrdenados().forEach((f) => {
+        linhas.push([f.nome || "", f.cargo || "", nomeObraDoFuncionario(f), rotuloStatus[f.status] || f.status || ""]);
+    });
+
+    const csv = linhas
+        .map((linha) => linha.map((campo) => `"${String(campo).replace(/"/g, '""')}"`).join(";"))
+        .join("\r\n");
+
+    // BOM no início ajuda o Excel a reconhecer acentuação (UTF-8) certinho.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `funcionarios-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function gerarPdfFuncionarios() {
+    const linhas = funcionariosOrdenados()
+        .map((f) => `<tr><td>${f.nome || ""}</td><td>${f.cargo || "—"}</td><td>${nomeObraDoFuncionario(f)}</td><td>${rotuloStatus[f.status] || f.status}</td></tr>`)
+        .join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Funcionários — Dunamis Services</title>
+<style>
+  body { font-family: system-ui, Arial, sans-serif; color: #111; padding: 32px; max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #555; font-size: 13px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ddd; }
+  th { background: #f2f2f2; }
+  .btn-imprimir { margin-top: 24px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+  @media print { .btn-imprimir { display: none; } }
+</style>
+</head>
+<body>
+  <h1>Dunamis Services — Funcionários</h1>
+  <div class="sub">Gerado em ${new Date().toLocaleString("pt-BR")} · Total: ${funcionariosCache.length}</div>
+  <table>
+    <thead><tr><th>Nome</th><th>Função</th><th>Obra</th><th>Status</th></tr></thead>
+    <tbody>${linhas || '<tr><td colspan="4">Nenhum funcionário cadastrado.</td></tr>'}</tbody>
+  </table>
+  <button class="btn-imprimir" onclick="window.print()">Imprimir / Salvar como PDF</button>
+</body>
+</html>`;
+
+    const janela = window.open("", "_blank");
+    if (!janela) {
+        alert("Não foi possível abrir o relatório. Verifique se o navegador bloqueou o pop-up.");
+        return;
+    }
+    janela.document.write(html);
+    janela.document.close();
+}
+
+document.getElementById("btnExportarCsv").addEventListener("click", exportarCsv);
+document.getElementById("btnExportarPdf").addEventListener("click", gerarPdfFuncionarios);
+
 observarColecao("obras", (obras) => {
     obrasCache = obras;
     preencherSelectObras();
