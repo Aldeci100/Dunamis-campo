@@ -18,6 +18,7 @@ const campoSalario = document.getElementById("funcSalario");
 const campoCustoHora = document.getElementById("funcCustoHora");
 const filtroFuncObra = document.getElementById("filtroFuncObra");
 const filtroFuncStatus = document.getElementById("filtroFuncStatus");
+const filtroFuncNome = document.getElementById("filtroFuncNome");
 
 const rotuloStatus = { ativo: "Ativo", afastado: "Afastado", inativo: "Inativo" };
 const rotuloAbono = {
@@ -82,11 +83,13 @@ function renderizarResumo() {
 function funcionariosFiltrados() {
     const obraId = filtroFuncObra.value;
     const status = filtroFuncStatus.value;
+    const nome = filtroFuncNome.value.trim().toLowerCase();
 
     return funcionariosCache.filter((f) => {
         if (status && f.status !== status) return false;
         if (obraId === "__sem_obra__" && f.obraAtualId) return false;
         if (obraId && obraId !== "__sem_obra__" && f.obraAtualId !== obraId) return false;
+        if (nome && !(f.nome || "").toLowerCase().includes(nome)) return false;
         return true;
     });
 }
@@ -175,6 +178,7 @@ function preencherFiltroObra() {
 
 filtroFuncObra.addEventListener("change", renderizarListaFiltrada);
 filtroFuncStatus.addEventListener("change", renderizarListaFiltrada);
+filtroFuncNome.addEventListener("input", renderizarListaFiltrada);
 
 function atualizarCustoHora() {
     const salario = Number(campoSalario.value);

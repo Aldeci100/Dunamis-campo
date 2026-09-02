@@ -13,6 +13,7 @@ const modal = document.getElementById("modalObra");
 const form = document.getElementById("formObra");
 const btnExcluir = document.getElementById("btnExcluirObra");
 const filtroObraStatus = document.getElementById("filtroObraStatus");
+const filtroObraNome = document.getElementById("filtroObraNome");
 
 let obrasCache = [];
 let funcionariosCache = [];
@@ -45,7 +46,12 @@ function renderizarObras(obras) {
 
 function obrasFiltradas() {
     const status = filtroObraStatus.value;
-    return obrasCache.filter((o) => !status || o.status === status);
+    const nome = filtroObraNome.value.trim().toLowerCase();
+    return obrasCache.filter((o) => {
+        if (status && o.status !== status) return false;
+        if (nome && !(o.nome || "").toLowerCase().includes(nome)) return false;
+        return true;
+    });
 }
 
 function renderizarListaFiltrada() {
@@ -135,6 +141,7 @@ document.getElementById("btnNovaObra").addEventListener("click", abrirNovo);
 document.getElementById("btnCancelarObra").addEventListener("click", fecharModal);
 modal.addEventListener("click", (e) => { if (e.target === modal) fecharModal(); });
 filtroObraStatus.addEventListener("change", renderizarListaFiltrada);
+filtroObraNome.addEventListener("input", renderizarListaFiltrada);
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();

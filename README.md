@@ -61,13 +61,13 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
 ```
 
 ## Módulos prontos
-- **Obras** — cadastro, status (planejada/andamento/concluída/parada), com filtro
-  por status na lista — *admin*
+- **Obras** — cadastro, status (planejada/andamento/concluída/parada), com busca
+  por nome e filtro por status na lista — *admin*
 - **Funcionários** — cadastro, obra atual, direito a vale-transporte/alimentação,
   espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos
-  estão em cada obra, sempre com o total geral independente de filtro), filtro
-  por obra e por status, e exportação da lista (nome/função/obra/status, seguindo
-  o filtro ativo) em Excel (CSV) ou PDF — *rh*
+  estão em cada obra, sempre com o total geral independente de filtro), busca
+  por nome e filtro por obra e por status, e exportação da lista (nome/função/
+  obra/status, seguindo o filtro ativo) em Excel (CSV) ou PDF — *rh*
 - **Ponto** — check-in/check-out por obra com geolocalização — *campo*
   (login único compartilhado, ex: `campo@dunamis.com`, num aparelho fixo
   da obra/encarregado; cada funcionário confirma com o próprio PIN de
