@@ -76,6 +76,16 @@ service cloud.firestore {
       allow delete: if ehAdmin();
     }
 
+    match /navios/{id} {
+      allow read, create, update: if temPapel(['financeiro']);
+      allow delete: if ehAdmin();
+    }
+
+    match /vendas_navio/{id} {
+      allow read, create, update: if temPapel(['financeiro']);
+      allow delete: if ehAdmin();
+    }
+
     match /aso/{id} {
       allow read, write: if temPapel(['sst']);
     }

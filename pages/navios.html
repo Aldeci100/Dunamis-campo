@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Navios — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Navios</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <div id="listaNavios" class="lista"></div>
+</div>
+
+<div class="fab" id="btnNovoNavio">+</div>
+
+<!-- Cadastro do navio -->
+<div class="modal-fundo" id="modalNavio" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalNavio">Novo navio</h2>
+    <form id="formNavio">
+      <input type="hidden" id="navioId">
+
+      <label>Nome do navio</label>
+      <input type="text" id="navioNome" required>
+
+      <label>Armador / empresa proprietária</label>
+      <input type="text" id="navioArmador" placeholder="Ex: Enave">
+
+      <div class="linha-2">
+        <div>
+          <label>Tipo de embarcação</label>
+          <input type="text" id="navioTipo" placeholder="Ex: Cargueiro">
+        </div>
+        <div>
+          <label>Porto</label>
+          <input type="text" id="navioPorto">
+        </div>
+      </div>
+
+      <label>Observações</label>
+      <input type="text" id="navioObservacoes">
+
+      <button type="submit" class="btn-primaria">Salvar</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarNavio">Cancelar</button>
+      <button type="button" class="btn-perigo" style="width:100%;margin-top:10px;display:none;" id="btnExcluirNavio">Excluir navio</button>
+    </form>
+  </div>
+</div>
+
+<!-- Vendas do navio -->
+<div class="modal-fundo" id="modalVendas" style="display:none;">
+  <div class="modal-caixa">
+    <h2>Vendas</h2>
+    <div class="sub" id="vendasNomeNavio" style="margin-top:-8px;"></div>
+
+    <div class="ponto-status" style="margin-top:14px;padding:16px;">
+      <div class="sub">Total vendido</div>
+      <div class="grande" id="vendasTotal" style="font-size:22px;">R$ 0,00</div>
+    </div>
+
+    <form id="formVenda" style="margin-top:16px;">
+      <input type="hidden" id="vendaId">
+
+      <label style="margin-top:0;">Tipo</label>
+      <select id="vendaTipo">
+        <option value="mercadoria">Mercadoria</option>
+        <option value="servico">Serviço</option>
+      </select>
+
+      <label>Descrição</label>
+      <input type="text" id="vendaDescricao" placeholder="Ex: Cabo de aço 10mm / Solda no casco" required>
+
+      <div class="linha-2">
+        <div>
+          <label>Quantidade</label>
+          <input type="number" id="vendaQuantidade" step="0.01" min="0" value="1" required>
+        </div>
+        <div>
+          <label>Valor unitário (R$)</label>
+          <input type="number" id="vendaValorUnitario" step="0.01" min="0" required>
+        </div>
+      </div>
+
+      <div class="linha-2">
+        <div>
+          <label>Data</label>
+          <input type="date" id="vendaData" required>
+        </div>
+        <div>
+          <label>Pagamento</label>
+          <select id="vendaStatusPagamento">
+            <option value="pendente">Pendente</option>
+            <option value="pago">Pago</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primaria" style="margin-top:16px;">Lançar venda</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarVenda">Fechar</button>
+    </form>
+
+    <label style="margin-top:22px;">Itens vendidos</label>
+    <div id="listaVendasNavio" class="lista" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/navios.js"></script>
+</body>
+</html>

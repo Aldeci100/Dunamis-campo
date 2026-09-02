@@ -94,6 +94,29 @@ despesas/{id}
   lancadoPor      string   (funcionarioId)
 ```
 
+## navios / vendas_navio
+Venda de mercadoria e serviço por embarcação — receita, não custo
+(por isso é coleção separada de `despesas`). Excluir venda ou navio é
+só admin, igual `despesas`/`funcionarios`; criar e editar é `financeiro`.
+```
+navios/{id}
+  nome            string
+  armador         string   (empresa proprietária/cliente, ex: "Enave")
+  tipo            string   (ex: "Cargueiro")
+  porto           string
+  observacoes     string
+
+vendas_navio/{id}
+  navioId         string
+  tipo            "mercadoria" | "servico"
+  descricao       string
+  quantidade      number
+  valorUnitario   number
+  valorTotal      number   (quantidade × valorUnitario, calculado ao salvar)
+  data            date
+  statusPagamento "pendente" | "pago"
+```
+
 ## sst (segurança do trabalho)
 Tela única com 4 abas. Cada uma com badge de vencido/vencendo/válido
 calculado a partir da data de validade (não fica salvo, é calculado
@@ -152,10 +175,10 @@ controla é *o que essa conta pode acessar*, via `usuarios/{email}`.
 
 | Papel | Acessa |
 |---|---|
-| admin | tudo, inclusive a tela Usuários, e é o único que pode **excluir** funcionário ou despesa |
+| admin | tudo, inclusive a tela Usuários, e é o único que pode **excluir** funcionário, despesa, navio ou venda |
 | rh | Funcionários (cadastra e edita; excluir é só admin) |
 | sst | SST (ASO, EPI, treinamentos, ocorrências) |
-| financeiro | Despesas / Financeiro (lança e edita; excluir é só admin) |
+| financeiro | Despesas / Financeiro / Navios (lança e edita; excluir é só admin) |
 | campo | Ponto |
 
 Quem não tem papel configurado vê uma tela de "sem permissão" ao

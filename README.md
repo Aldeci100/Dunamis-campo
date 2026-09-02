@@ -65,6 +65,7 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   4 dígitos, cadastrado em **Funcionários**, para evitar que um bata o
   ponto pelo outro)
 - **Despesas** — material, transporte, aluguel, água, luz, por obra, com total — *financeiro*
+- **Navios** — cadastro de embarcação + vendas de mercadoria/serviço por navio, com status de pagamento — *financeiro*
 - **SST** — ASO, EPI, treinamentos (NR-35 etc.) e ocorrências, com aviso de vencido/vencendo — *sst*
 - **Financeiro** — fechamento mensal por obra: cruza horas batidas no Ponto
   (× custo/hora do funcionário, cadastrado em **Funcionários**) com as
