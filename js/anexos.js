@@ -1,5 +1,6 @@
 // =====================================================
-// ANEXOS (notas fiscais, orçamentos) — usado em Obras e Navios
+// ANEXOS (notas fiscais, orçamentos, comprovantes) — usado em Obras,
+// Navios e Despesas
 // =====================================================
 // Guarda o arquivo direto dentro do documento no Firestore, como
 // base64 — não depende do Firebase Storage, que hoje só está
@@ -16,6 +17,7 @@ const TAMANHO_MAXIMO_ANEXO = 700 * 1024; // ~700KB de folga pro limite de 1MB do
 const ROTULO_TIPO_ANEXO = {
     nota_fiscal: "Nota fiscal",
     orcamento: "Orçamento",
+    comprovante: "Comprovante",
     outro: "Outro",
 };
 

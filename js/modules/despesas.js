@@ -30,6 +30,8 @@ const selectTipo = document.getElementById("despesaTipo");
 let obrasCache = [];
 let despesasCache = [];
 let tiposCustomCache = [];
+let anexosCache = [];
+let despesaAnexosAtual = null;
 
 function rotuloTipo(tipo) {
     if (TIPOS_FIXOS[tipo]) return TIPOS_FIXOS[tipo];
@@ -145,11 +147,21 @@ function renderizar() {
                 </div>
                 <span class="selo selo-andamento">${formatarMoeda(d.valor)}</span>
             </div>
+            <div class="linha-2" style="margin-top:10px;">
+                <button type="button" class="btn-secundaria btn-anexos" data-id="${d.id}">📎 Anexos</button>
+            </div>
         </div>
     `).join("");
 
     listaEl.querySelectorAll(".item").forEach((el) => {
         el.addEventListener("click", () => abrirEdicao(despesasCache.find((d) => d.id === el.dataset.id)));
+    });
+
+    listaEl.querySelectorAll(".btn-anexos").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            abrirModalAnexos(despesasCache.find((d) => d.id === btn.dataset.id));
+        });
     });
 }
 
@@ -208,6 +220,77 @@ btnExcluir.addEventListener("click", async () => {
     fecharModal();
 });
 
+// ---------- Anexos (comprovante, nota fiscal) ----------
+
+const modalAnexos = document.getElementById("modalAnexos");
+const formAnexo = document.getElementById("formAnexo");
+const listaAnexosEl = document.getElementById("listaAnexosDespesa");
+const btnEnviarAnexo = document.getElementById("btnEnviarAnexo");
+
+function abrirModalAnexos(despesa) {
+    if (!despesa) return;
+    despesaAnexosAtual = despesa;
+    document.getElementById("anexosNomeDespesa").textContent = despesa.descricao || rotuloTipo(despesa.tipo);
+    formAnexo.reset();
+    renderizarAnexos();
+    modalAnexos.style.display = "flex";
+}
+
+function renderizarAnexos() {
+    if (!despesaAnexosAtual) return;
+    const anexos = anexosCache
+        .filter((a) => a.entidadeTipo === "despesa" && a.entidadeId === despesaAnexosAtual.id)
+        .sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+
+    listaAnexosEl.innerHTML = htmlListaAnexos(anexos);
+
+    listaAnexosEl.querySelectorAll(".btn-abrir-anexo").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            abrirAnexoVisualizacao(anexos.find((a) => a.id === btn.dataset.id));
+        });
+    });
+
+    listaAnexosEl.querySelectorAll(".btn-excluir-anexo").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("Excluir este anexo?")) return;
+            const anexo = anexos.find((a) => a.id === btn.dataset.id);
+            await excluirAnexo(anexo);
+        });
+    });
+}
+
+document.getElementById("btnFecharAnexos").addEventListener("click", () => {
+    modalAnexos.style.display = "none";
+});
+modalAnexos.addEventListener("click", (e) => { if (e.target === modalAnexos) modalAnexos.style.display = "none"; });
+
+formAnexo.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!despesaAnexosAtual) return;
+
+    const arquivo = document.getElementById("anexoArquivo").files[0];
+    if (!arquivo) return;
+
+    btnEnviarAnexo.disabled = true;
+    btnEnviarAnexo.textContent = "Enviando...";
+
+    try {
+        await enviarAnexo(
+            "despesa",
+            despesaAnexosAtual.id,
+            arquivo,
+            document.getElementById("anexoTipo").value,
+            document.getElementById("anexoObservacao").value.trim()
+        );
+        formAnexo.reset();
+    } catch (erro) {
+        alert("Não foi possível enviar o anexo: " + erro.message);
+    } finally {
+        btnEnviarAnexo.disabled = false;
+        btnEnviarAnexo.textContent = "Enviar anexo";
+    }
+});
+
 observarColecao("obras", (obras) => {
     obrasCache = obras;
     preencherSelectsObra();
@@ -223,6 +306,11 @@ observarColecao("tiposDespesa", (tipos) => {
 observarColecao(COLECAO, (despesas) => {
     despesasCache = despesas;
     renderizar();
+});
+
+observarColecao("anexos", (l) => {
+    anexosCache = l;
+    if (modalAnexos.style.display === "flex") renderizarAnexos();
 });
 
 })();

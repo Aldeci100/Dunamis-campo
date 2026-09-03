@@ -131,19 +131,20 @@ vendas_navio/{id}
 ```
 
 ## anexos
-Nota fiscal e orçamento, anexados em Obras (botão 📎, admin) e em
-Navios (botão 📎, financeiro). O arquivo inteiro fica dentro do
-próprio documento, em base64 — **não usa Firebase Storage**, que hoje
-só está disponível no plano pago (Blaze) do Firebase. Por causa do
-limite de 1MB por documento do Firestore, só aceita arquivo até
-~700KB (ver `TAMANHO_MAXIMO_ANEXO` em [js/anexos.js](../js/anexos.js)) —
-serve bem pra PDF simples ou foto de resolução baixa/média, não serve
-pra arquivo grande.
+Nota fiscal e orçamento, anexados em Obras (botão 📎, admin), em
+Navios (botão 📎, financeiro) e comprovante/nota fiscal em Despesas
+(botão 📎, financeiro). O arquivo inteiro fica dentro do próprio
+documento, em base64 — **não usa Firebase Storage**, que hoje só está
+disponível no plano pago (Blaze) do Firebase. Por causa do limite de
+1MB por documento do Firestore, só aceita arquivo até ~700KB (ver
+`TAMANHO_MAXIMO_ANEXO` em [js/anexos.js](../js/anexos.js)) — serve bem
+pra PDF simples ou foto de resolução baixa/média, não serve pra
+arquivo grande.
 ```
 anexos/{id}
-  entidadeTipo    "obra" | "navio"
-  entidadeId      string   (obraId ou navioId)
-  tipo            "nota_fiscal" | "orcamento" | "outro"
+  entidadeTipo    "obra" | "navio" | "despesa"
+  entidadeId      string   (obraId, navioId ou despesaId)
+  tipo            "nota_fiscal" | "orcamento" | "comprovante" | "outro"
   nomeArquivo     string
   observacao      string
   url             string   (o arquivo em si, como data URL base64)
