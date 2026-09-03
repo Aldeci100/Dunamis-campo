@@ -62,12 +62,13 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
 
 ## Módulos prontos
 - **Obras** — cadastro, status (planejada/andamento/concluída/parada), com busca
-  por nome e filtro por status na lista; botão 📄 Relatório gera automaticamente
-  o cruzamento de mão de obra + despesas (com tipo e observação) contra o valor
-  do contrato, já calculando margem ou prejuízo — *admin*. Na mão de obra,
-  funcionário **atualmente alocado** à obra entra pelo salário mensal (×
-  meses corridos desde o início da obra); quem não está alocado mas tem ponto
-  batido ali (ex: terceirizado avulso) entra pelas horas × custo/hora
+  por nome e filtro por status na lista; botão 📄 Relatório mostra quantos
+  funcionários estão alocados na obra e gera automaticamente o cruzamento de
+  mão de obra + despesas (com tipo e observação) contra o valor do contrato,
+  já calculando margem ou prejuízo — *admin*. Na mão de obra, funcionário
+  **atualmente alocado** à obra entra pelo salário mensal (× meses corridos
+  desde o início da obra); quem não está alocado mas tem ponto batido ali
+  (ex: terceirizado avulso) entra pelas horas × custo/hora
 - **Funcionários** — cadastro, obra atual, direito a vale-transporte/alimentação,
   espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos
   estão em cada obra, sempre com o total geral independente de filtro), busca

@@ -263,6 +263,7 @@ function gerarRelatorio(obraId) {
     const valorImposto = (obra.valor || 0) * aliquota / 100;
     const valorLiquido = (obra.valor || 0) - valorImposto;
     const margem = valorLiquido - r.custoTotal;
+    const funcionariosAlocados = funcionariosCache.filter((f) => f.status === "ativo" && f.obraAtualId === obraId).length;
 
     const linhasFuncionarios = r.funcionarios.length
         ? r.funcionarios.map((f) => f.salarial
@@ -307,6 +308,7 @@ function gerarRelatorio(obraId) {
     <div>Status: ${rotuloStatus[obra.status] || obra.status}</div>
     <div>Endereço: ${obra.endereco || "—"}</div>
     <div>Início: ${formatarData(obra.dataInicio) || "—"} · Previsão de fim: ${formatarData(obra.dataFim) || "—"}</div>
+    <div><b>Funcionários alocados nesta obra: ${funcionariosAlocados}</b></div>
   </div>
 
   <h2>Financeiro</h2>
