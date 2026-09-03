@@ -21,6 +21,8 @@ const TIPOS_FIXOS = {
     agua: "Água", luz: "Luz", outros: "Outros",
 };
 
+const JORNADA_MENSAL_HORAS = 220; // divisor padrão CLT (jornada de 44h/semana)
+
 let obrasCache = [];
 let funcionariosCache = [];
 let pontosCache = [];
@@ -32,6 +34,20 @@ function rotuloTipo(tipo) {
     if (TIPOS_FIXOS[tipo]) return TIPOS_FIXOS[tipo];
     const custom = tiposCustomCache.find((t) => t.id === tipo);
     return custom ? custom.nome : tipo;
+}
+
+// Meses corridos entre o início da obra e hoje (ou o fim, se já concluída),
+// contando o mês de início — mínimo 1.
+function mesesDecorridos(dataInicioIso, dataFimIso) {
+    if (!dataInicioIso) return 1;
+    const inicio = new Date(dataInicioIso + "T00:00:00");
+    const fim = dataFimIso ? new Date(dataFimIso + "T00:00:00") : new Date();
+    const meses = (fim.getFullYear() - inicio.getFullYear()) * 12 + (fim.getMonth() - inicio.getMonth()) + 1;
+    return Math.max(1, meses);
+}
+
+function custoMensalFuncionario(f) {
+    return f.salario > 0 ? f.salario : (f.custoHora || 0) * JORNADA_MENSAL_HORAS;
 }
 
 function formatarMoeda(valor) {
@@ -51,10 +67,23 @@ function nomeFuncionario(id) {
 // pra comparar com o valor do contrato — margem não faz sentido olhando
 // só um mês se a obra atravessa vários.
 function calcularCustoTotalObra(obraId) {
+    const obra = obrasCache.find((o) => o.id === obraId);
+    const cobertosPorSalario = new Set();
     let maoDeObra = 0;
+
+    funcionariosCache
+        .filter((f) => f.status === "ativo" && f.obraAtualId === obraId)
+        .forEach((f) => {
+            const custoMensal = custoMensalFuncionario(f);
+            if (!custoMensal) return;
+            const meses = mesesDecorridos(obra?.dataInicio, obra?.status === "concluida" ? obra.dataFim : null);
+            maoDeObra += custoMensal * meses;
+            cobertosPorSalario.add(f.id);
+        });
+
     const porFuncionario = {};
     pontosCache
-        .filter((p) => p.obraId === obraId)
+        .filter((p) => p.obraId === obraId && !cobertosPorSalario.has(p.funcionarioId))
         .forEach((p) => {
             (porFuncionario[p.funcionarioId] = porFuncionario[p.funcionarioId] || []).push(p);
         });
@@ -93,11 +122,26 @@ function calcularResumo() {
         resumo[o.id] = { nome: o.nome, maoDeObra: 0, despesas: 0, funcionarios: {}, despesasList: [] };
     });
 
+    // Funcionários ATUALMENTE alocados a uma obra entram pelo salário
+    // mensal cheio (não pelas horas batidas no mês) — representa melhor o
+    // custo de quem está fixo na obra mesmo sem bater ponto todo dia.
+    const cobertosPorSalario = new Set(); // "obraId|funcionarioId"
+    funcionariosCache
+        .filter((f) => f.status === "ativo" && f.obraAtualId && resumo[f.obraAtualId])
+        .forEach((f) => {
+            const custoMensal = custoMensalFuncionario(f);
+            if (!custoMensal) return;
+            resumo[f.obraAtualId].funcionarios[f.id] = { salarial: true, custoMensal, subtotal: custoMensal };
+            resumo[f.obraAtualId].maoDeObra += custoMensal;
+            cobertosPorSalario.add(f.obraAtualId + "|" + f.id);
+        });
+
     const grupos = {};
     pontosCache
         .filter((p) => p.timestamp >= inicio && p.timestamp < fim)
         .forEach((p) => {
             const chave = p.obraId + "|" + p.funcionarioId;
+            if (cobertosPorSalario.has(chave)) return;
             (grupos[chave] = grupos[chave] || []).push(p);
         });
 
@@ -201,7 +245,9 @@ function abrirDetalhe(obraId) {
                 <div class="linha-topo">
                     <div>
                         <div class="nome">${nomeFuncionario(funcionarioId)}</div>
-                        <div class="sub">${formatarHoras(dados.horas)} × ${formatarMoeda(dados.custoHora)}/h${dados.custoHora ? "" : " (defina o custo/hora em Funcionários)"}</div>
+                        <div class="sub">${dados.salarial
+                            ? "Salário mensal (alocado nesta obra)"
+                            : `${formatarHoras(dados.horas)} × ${formatarMoeda(dados.custoHora)}/h${dados.custoHora ? "" : " (defina o custo/hora em Funcionários)"}`}</div>
                     </div>
                     <span class="selo selo-andamento">${formatarMoeda(dados.subtotal)}</span>
                 </div>

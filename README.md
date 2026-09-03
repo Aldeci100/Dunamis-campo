@@ -63,8 +63,11 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
 ## Módulos prontos
 - **Obras** — cadastro, status (planejada/andamento/concluída/parada), com busca
   por nome e filtro por status na lista; botão 📄 Relatório gera automaticamente
-  o cruzamento de mão de obra (horas × custo/hora) + despesas (com tipo e
-  observação) contra o valor do contrato, já calculando margem ou prejuízo — *admin*
+  o cruzamento de mão de obra + despesas (com tipo e observação) contra o valor
+  do contrato, já calculando margem ou prejuízo — *admin*. Na mão de obra,
+  funcionário **atualmente alocado** à obra entra pelo salário mensal (×
+  meses corridos desde o início da obra); quem não está alocado mas tem ponto
+  batido ali (ex: terceirizado avulso) entra pelas horas × custo/hora
 - **Funcionários** — cadastro, obra atual, direito a vale-transporte/alimentação,
   espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos
   estão em cada obra, sempre com o total geral independente de filtro), busca
@@ -83,9 +86,11 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
 - **Anexos** — nota fiscal/orçamento/comprovante anexados em Obras, Navios e
   Despesas (botão 📎, até ~700KB, guardado no Firestore)
 - **SST** — ASO, EPI, treinamentos (NR-35 etc.) e ocorrências, com aviso de vencido/vencendo — *sst*
-- **Financeiro** — fechamento mensal por obra: cruza horas batidas no Ponto
-  (× custo/hora do funcionário, cadastrado em **Funcionários**) com as
-  Despesas lançadas, e mostra o custo total por obra no mês — *financeiro*
+- **Financeiro** — fechamento mensal por obra: mão de obra (salário mensal de
+  quem está alocado na obra + horas × custo/hora de quem não está, mesma
+  regra do Relatório de Obras) cruzada com as Despesas lançadas, mostrando o
+  custo total por obra no mês e a margem/prejuízo contra o valor do
+  contrato — *financeiro*
 - **Usuários** — libera o acesso de cada e-mail a um setor — *admin*
 
 ## Próximos passos (ver docs/MODELO-DE-DADOS.md)

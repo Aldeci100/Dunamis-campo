@@ -190,15 +190,46 @@ function formatarHoras(horas) {
     return (horas || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "h";
 }
 
+const JORNADA_MENSAL_HORAS = 220; // divisor padrão CLT (jornada de 44h/semana)
+
+// Meses corridos entre o início da obra e hoje (ou o fim, se já concluída),
+// contando o mês de início — mínimo 1. Usado pra estimar quantos meses de
+// salário um funcionário alocado acumulou na obra.
+function mesesDecorridos(dataInicioIso, dataFimIso) {
+    if (!dataInicioIso) return 1;
+    const inicio = new Date(dataInicioIso + "T00:00:00");
+    const fim = dataFimIso ? new Date(dataFimIso + "T00:00:00") : new Date();
+    const meses = (fim.getFullYear() - inicio.getFullYear()) * 12 + (fim.getMonth() - inicio.getMonth()) + 1;
+    return Math.max(1, meses);
+}
+
 function calcularResumoObra(obraId) {
+    const obra = obrasCache.find((o) => o.id === obraId);
+    const cobertosPorSalario = new Set();
+
+    // Funcionários ATUALMENTE alocados à obra entram pelo salário mensal
+    // (× meses corridos desde o início da obra), não pelas horas batidas —
+    // representa melhor o custo de quem está fixo na obra mesmo sem bater
+    // ponto todo dia.
+    const funcionariosSalario = funcionariosCache
+        .filter((f) => f.status === "ativo" && f.obraAtualId === obraId)
+        .map((f) => {
+            const custoMensal = f.salario > 0 ? f.salario : (f.custoHora || 0) * JORNADA_MENSAL_HORAS;
+            if (!custoMensal) return null;
+            cobertosPorSalario.add(f.id);
+            const meses = mesesDecorridos(obra?.dataInicio, obra?.status === "concluida" ? obra.dataFim : null);
+            return { nome: f.nome, salarial: true, meses, custoMensal, subtotal: custoMensal * meses };
+        })
+        .filter(Boolean);
+
     const porFuncionario = {};
     pontosCache
-        .filter((p) => p.obraId === obraId)
+        .filter((p) => p.obraId === obraId && !cobertosPorSalario.has(p.funcionarioId))
         .forEach((p) => {
             (porFuncionario[p.funcionarioId] = porFuncionario[p.funcionarioId] || []).push(p);
         });
 
-    const funcionarios = Object.entries(porFuncionario).map(([funcionarioId, pontos]) => {
+    const funcionariosHoras = Object.entries(porFuncionario).map(([funcionarioId, pontos]) => {
         pontos.sort((a, b) => a.timestamp - b.timestamp);
         let horas = 0;
         let entradaAberta = null;
@@ -211,8 +242,10 @@ function calcularResumoObra(obraId) {
         });
         const func = funcionariosCache.find((f) => f.id === funcionarioId);
         const custoHora = func?.custoHora || 0;
-        return { nome: func ? func.nome : "Funcionário removido", horas, custoHora, subtotal: horas * custoHora };
+        return { nome: func ? func.nome : "Funcionário removido", salarial: false, horas, custoHora, subtotal: horas * custoHora };
     });
+
+    const funcionarios = [...funcionariosSalario, ...funcionariosHoras];
 
     const despesasDaObra = despesasCache.filter((d) => d.obraId === obraId);
     const totalMaoDeObra = funcionarios.reduce((soma, f) => soma + f.subtotal, 0);
@@ -232,7 +265,10 @@ function gerarRelatorio(obraId) {
     const margem = valorLiquido - r.custoTotal;
 
     const linhasFuncionarios = r.funcionarios.length
-        ? r.funcionarios.map((f) => `<tr><td>${f.nome}</td><td>${formatarHoras(f.horas)}</td><td>${formatarMoeda(f.custoHora)}</td><td>${formatarMoeda(f.subtotal)}</td></tr>`).join("")
+        ? r.funcionarios.map((f) => f.salarial
+            ? `<tr><td>${f.nome}</td><td>Salário mensal × ${f.meses} ${f.meses > 1 ? "meses" : "mês"}</td><td>${formatarMoeda(f.custoMensal)}</td><td>${formatarMoeda(f.subtotal)}</td></tr>`
+            : `<tr><td>${f.nome}</td><td>${formatarHoras(f.horas)}</td><td>${formatarMoeda(f.custoHora)}</td><td>${formatarMoeda(f.subtotal)}</td></tr>`
+          ).join("")
         : '<tr><td colspan="4">Nenhum ponto registrado nessa obra.</td></tr>';
 
     const linhasDespesas = r.despesasDaObra.length
@@ -284,10 +320,14 @@ function gerarRelatorio(obraId) {
 
   <h2>Mão de obra (todos os períodos)</h2>
   <table>
-    <thead><tr><th>Funcionário</th><th>Horas</th><th>Custo/hora</th><th>Subtotal</th></tr></thead>
+    <thead><tr><th>Funcionário</th><th>Horas / período</th><th>Valor</th><th>Subtotal</th></tr></thead>
     <tbody>${linhasFuncionarios}</tbody>
     <tfoot><tr><td colspan="3"><b>Total mão de obra</b></td><td><b>${formatarMoeda(r.totalMaoDeObra)}</b></td></tr></tfoot>
   </table>
+  <div class="sub" style="margin-top:6px;">
+    Funcionários atualmente alocados à obra entram pelo salário mensal
+    (desde o início da obra); os demais, pelas horas batidas no Ponto.
+  </div>
 
   <h2>Despesas</h2>
   <table>

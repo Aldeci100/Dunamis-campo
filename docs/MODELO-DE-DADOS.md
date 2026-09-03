@@ -187,9 +187,24 @@ lugar nenhum — é montado na hora. Dias com `abonos` lançados aparecem
 anotados ("Abonado: ...") no lugar de ficarem em branco.
 
 ## financeiro (fechamento)
-Não é coleção própria — a tela cruza `pontos` (pares entrada/saída ×
-`custoHora` do funcionário = mão de obra) com `despesas`, agrupado por
-obra e por mês. Nada é salvo, é recalculado toda vez que a tela abre.
+Não é coleção própria — a tela cruza mão de obra com `despesas`,
+agrupado por obra e por mês. Nada é salvo, é recalculado toda vez que
+a tela abre.
+
+Mão de obra tem duas regras, pra não depender de todo mundo bater
+ponto certinho:
+- Funcionário com `obraAtualId` apontando pra essa obra e `status`
+  "ativo" entra pelo **salário mensal cheio** (`salario`, ou
+  `custoHora × 220` se não tiver salário definido) — não pelas horas
+  batidas. No fechamento mensal é o salário de 1 mês; no Relatório por
+  obra (que olha todos os períodos) é o salário × meses corridos desde
+  `dataInicio` da obra.
+- Funcionário SEM essa obra como atual, mas com `pontos` registrados
+  nela (ex: terceirizado avulso, ou já trocou de obra), continua
+  entrando pelas horas batidas × `custoHora` — pra não perder o custo
+  real desses registros.
+Um funcionário nunca conta nas duas regras ao mesmo tempo pra mesma
+obra (evita contar salário + horas em dobro).
 
 No detalhe de cada obra, se ela tiver `valor` preenchido, mostra também:
 valor líquido (valor − imposto da nota, usando `aliquotaImposto`) e a
