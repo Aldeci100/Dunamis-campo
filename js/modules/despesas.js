@@ -147,6 +147,7 @@ function renderizar() {
                 </div>
                 <span class="selo selo-andamento">${formatarMoeda(d.valor)}</span>
             </div>
+            ${d.observacao ? `<div class="sub" style="margin-top:8px;">${d.observacao}</div>` : ""}
             <div class="linha-2" style="margin-top:10px;">
                 <button type="button" class="btn-secundaria btn-anexos" data-id="${d.id}">📎 Anexos</button>
             </div>
@@ -182,6 +183,7 @@ function abrirEdicao(d) {
     document.getElementById("despesaDescricao").value = d.descricao || "";
     document.getElementById("despesaValor").value = d.valor ?? "";
     document.getElementById("despesaData").value = d.data || "";
+    document.getElementById("despesaObs").value = d.observacao || "";
     document.getElementById("tituloModalDespesa").textContent = "Editar despesa";
     btnExcluir.style.display = papeisUsuario.includes("admin") ? "block" : "none";
     modal.style.display = "flex";
@@ -206,6 +208,7 @@ form.addEventListener("submit", async (e) => {
         descricao: document.getElementById("despesaDescricao").value.trim(),
         valor: Number(document.getElementById("despesaValor").value) || 0,
         data: document.getElementById("despesaData").value,
+        observacao: document.getElementById("despesaObs").value.trim(),
     };
 
     await salvarDocumento(COLECAO, dados, id);

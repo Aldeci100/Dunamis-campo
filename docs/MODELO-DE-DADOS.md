@@ -92,6 +92,7 @@ despesas/{id}
   descricao       string
   valor           number
   data            date
+  observacao      string   (opcional)
   comprovanteUrl  string | null
   lancadoPor      string   (funcionarioId)
 ```
