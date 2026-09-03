@@ -19,6 +19,7 @@ let obrasCache = [];
 let funcionariosCache = [];
 let pontosCache = [];
 let despesasCache = [];
+let tiposDespesaCache = [];
 let anexosCache = [];
 let obraAnexosAtual = null;
 
@@ -28,6 +29,21 @@ const rotuloStatus = {
     concluida: "Concluída",
     parada: "Parada",
 };
+
+const TIPOS_DESPESA_FIXOS = {
+    material: "Material",
+    transporte: "Transporte",
+    aluguel: "Aluguel",
+    agua: "Água",
+    luz: "Luz",
+    outros: "Outros",
+};
+
+function rotuloTipoDespesa(tipo) {
+    if (TIPOS_DESPESA_FIXOS[tipo]) return TIPOS_DESPESA_FIXOS[tipo];
+    const custom = tiposDespesaCache.find((t) => t.id === tipo);
+    return custom ? custom.nome : tipo;
+}
 
 function formatarData(iso) {
     if (!iso) return "";
@@ -220,7 +236,7 @@ function gerarRelatorio(obraId) {
         : '<tr><td colspan="4">Nenhum ponto registrado nessa obra.</td></tr>';
 
     const linhasDespesas = r.despesasDaObra.length
-        ? r.despesasDaObra.map((d) => `<tr><td>${d.descricao || d.tipo}</td><td>${d.tipo}</td><td>${formatarData(d.data)}</td><td>${formatarMoeda(d.valor)}</td></tr>`).join("")
+        ? r.despesasDaObra.map((d) => `<tr><td>${d.descricao || rotuloTipoDespesa(d.tipo)}${d.observacao ? `<br><span style="color:#888;font-size:12px;">${d.observacao}</span>` : ""}</td><td>${rotuloTipoDespesa(d.tipo)}</td><td>${formatarData(d.data)}</td><td>${formatarMoeda(d.valor)}</td></tr>`).join("")
         : '<tr><td colspan="4">Nenhuma despesa lançada nessa obra.</td></tr>';
 
     const html = `<!DOCTYPE html>
@@ -369,6 +385,7 @@ observarColecao(COLECAO, renderizarObras);
 observarColecao("funcionarios", (l) => { funcionariosCache = l; });
 observarColecao("pontos", (l) => { pontosCache = l; });
 observarColecao("despesas", (l) => { despesasCache = l; });
+observarColecao("tiposDespesa", (l) => { tiposDespesaCache = l; });
 observarColecao("anexos", (l) => {
     anexosCache = l;
     if (modalAnexos.style.display === "flex") renderizarAnexos();

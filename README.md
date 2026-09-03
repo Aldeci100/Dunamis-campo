@@ -62,7 +62,9 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
 
 ## Módulos prontos
 - **Obras** — cadastro, status (planejada/andamento/concluída/parada), com busca
-  por nome e filtro por status na lista — *admin*
+  por nome e filtro por status na lista; botão 📄 Relatório gera automaticamente
+  o cruzamento de mão de obra (horas × custo/hora) + despesas (com tipo e
+  observação) contra o valor do contrato, já calculando margem ou prejuízo — *admin*
 - **Funcionários** — cadastro, obra atual, direito a vale-transporte/alimentação,
   espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos
   estão em cada obra, sempre com o total geral independente de filtro), busca
