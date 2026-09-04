@@ -142,8 +142,8 @@ function renderizar() {
         <div class="item" data-id="${d.id}">
             <div class="linha-topo">
                 <div>
-                    <div class="nome">${d.descricao || rotuloTipo(d.tipo)}</div>
-                    <div class="sub">${nomeObra(d.obraId)} · ${formatarData(d.data)}</div>
+                    <div class="nome">${nomeObra(d.obraId)}</div>
+                    <div class="sub">${d.descricao || rotuloTipo(d.tipo)} · ${formatarData(d.data)}</div>
                 </div>
                 <span class="selo selo-andamento">${formatarMoeda(d.valor)}</span>
             </div>
