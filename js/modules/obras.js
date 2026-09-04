@@ -86,7 +86,15 @@ function renderizarListaFiltrada() {
     const ordem = { andamento: 0, planejada: 1, parada: 2, concluida: 3 };
     obras.sort((a, b) => (ordem[a.status] ?? 9) - (ordem[b.status] ?? 9));
 
-    listaEl.innerHTML = obras.map((o) => `
+    listaEl.innerHTML = obras.map((o) => {
+        let botaoStatus = "";
+        if (o.status === "planejada" || o.status === "parada") {
+            botaoStatus = `<button type="button" class="btn-primaria btn-iniciar" style="margin-top:10px;" data-id="${o.id}">▶️ Iniciar obra</button>`;
+        } else if (o.status === "andamento") {
+            botaoStatus = `<button type="button" class="btn-primaria btn-finalizar" style="margin-top:10px;" data-id="${o.id}">✅ Finalizar obra</button>`;
+        }
+
+        return `
         <div class="item" data-id="${o.id}">
             <div class="linha-topo">
                 <div>
@@ -100,12 +108,14 @@ function renderizarListaFiltrada() {
                 ${o.dataInicio ? "Início: " + formatarData(o.dataInicio) : ""}
                 ${o.dataFim ? " · Previsão: " + formatarData(o.dataFim) : ""}
             </div>` : ""}
+            ${botaoStatus}
             <div class="linha-2" style="margin-top:10px;">
                 <button type="button" class="btn-secundaria btn-relatorio" data-id="${o.id}">📄 Relatório</button>
                 <button type="button" class="btn-secundaria btn-anexos" data-id="${o.id}">📎 Anexos</button>
             </div>
         </div>
-    `).join("");
+    `;
+    }).join("");
 
     listaEl.querySelectorAll(".item").forEach((el) => {
         el.addEventListener("click", () => abrirEdicao(obras.find((o) => o.id === el.dataset.id)));
@@ -124,6 +134,28 @@ function renderizarListaFiltrada() {
             abrirModalAnexos(obras.find((o) => o.id === btn.dataset.id));
         });
     });
+
+    listaEl.querySelectorAll(".btn-iniciar").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            mudarStatusObra(obras.find((o) => o.id === btn.dataset.id), "andamento");
+        });
+    });
+
+    listaEl.querySelectorAll(".btn-finalizar").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            mudarStatusObra(obras.find((o) => o.id === btn.dataset.id), "concluida");
+        });
+    });
+}
+
+async function mudarStatusObra(obra, novoStatus) {
+    if (!obra) return;
+    const dados = { status: novoStatus };
+    if (novoStatus === "andamento" && !obra.dataInicio) dados.dataInicio = new Date().toISOString().slice(0, 10);
+    if (novoStatus === "concluida" && !obra.dataFim) dados.dataFim = new Date().toISOString().slice(0, 10);
+    await salvarDocumento(COLECAO, dados, obra.id);
 }
 
 function abrirNovo() {
