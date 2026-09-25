@@ -84,7 +84,11 @@ pontos/{id}
 ## despesas
 Cobre material, transporte, aluguel, água, luz — tudo rateado por obra.
 `tipo` pode ser um dos fixos abaixo ou o id de um tipo criado pelo usuário
-(ver `tiposDespesa`).
+(ver `tiposDespesa`). A lista na tela ordena por `criadoEm` (quando foi
+lançada), não por `data` — assim a última despesa cadastrada sempre
+aparece primeiro, mesmo que a data dela seja anterior a outras já
+lançadas. Despesas antigas, sem `criadoEm`, caem pra `data` como
+aproximação.
 ```
 despesas/{id}
   obraId          string
@@ -93,6 +97,7 @@ despesas/{id}
   valor           number
   data            date
   observacao      string   (opcional)
+  criadoEm        number   (Date.now() no momento da criação, não muda ao editar)
   comprovanteUrl  string | null
   lancadoPor      string   (funcionarioId)
 ```

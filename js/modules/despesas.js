@@ -108,6 +108,15 @@ function nomeObra(obraId) {
     return obra ? obra.nome : "Obra removida";
 }
 
+// Ordena pela hora em que a despesa foi lançada (criadoEm), não pela data
+// da despesa em si — assim a última lançada sempre fica em primeiro, mesmo
+// se a data dela for anterior a outras já cadastradas. Despesas antigas,
+// lançadas antes desse campo existir, caem pra data como aproximação.
+function timestampOrdenacao(d) {
+    if (d.criadoEm) return d.criadoEm;
+    return d.data ? new Date(d.data + "T12:00:00").getTime() : 0;
+}
+
 function preencherSelectsObra() {
     const opcoes = obrasCache
         .slice()
@@ -144,7 +153,7 @@ function renderizar() {
         return;
     }
 
-    const ordenadas = filtradas.slice().sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+    const ordenadas = filtradas.slice().sort((a, b) => timestampOrdenacao(b) - timestampOrdenacao(a));
 
     listaEl.innerHTML = ordenadas.map((d) => `
         <div class="item" data-id="${d.id}">
@@ -219,6 +228,7 @@ form.addEventListener("submit", async (e) => {
         data: document.getElementById("despesaData").value,
         observacao: document.getElementById("despesaObs").value.trim(),
     };
+    if (!id) dados.criadoEm = Date.now();
 
     await salvarDocumento(COLECAO, dados, id);
     fecharModal();
