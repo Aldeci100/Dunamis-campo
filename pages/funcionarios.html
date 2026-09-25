@@ -84,6 +84,14 @@
       <label>Data de admissão</label>
       <input type="date" id="funcAdmissao">
 
+      <label>Início das últimas férias (opcional)</label>
+      <input type="date" id="funcUltimasFerias">
+      <p class="aviso" style="text-align:left;margin-top:6px;">
+        Usado em Obrigações pra avisar férias vencidas certinho. Deixe em
+        branco se ele nunca tirou férias — nesse caso conta a partir da
+        admissão.
+      </p>
+
       <label>Obra atual</label>
       <select id="funcObra">
         <option value="">Sem obra no momento</option>
@@ -181,6 +189,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/funcionarios.js?v=4"></script>
+<script src="../js/modules/funcionarios.js?v=5"></script>
 </body>
 </html>

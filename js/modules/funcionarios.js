@@ -208,6 +208,7 @@ function abrirEdicao(f) {
     document.getElementById("funcTelefone").value = f.telefone || "";
     document.getElementById("funcCargo").value = f.cargo || "";
     document.getElementById("funcAdmissao").value = f.dataAdmissao || "";
+    document.getElementById("funcUltimasFerias").value = f.ultimasFerias || "";
     document.getElementById("funcObra").value = f.obraAtualId || "";
     document.getElementById("funcStatus").value = f.status || "ativo";
     document.getElementById("funcPin").value = f.pin || "";
@@ -246,6 +247,7 @@ form.addEventListener("submit", async (e) => {
         telefone: document.getElementById("funcTelefone").value.trim(),
         cargo: document.getElementById("funcCargo").value.trim(),
         dataAdmissao: document.getElementById("funcAdmissao").value,
+        ultimasFerias: document.getElementById("funcUltimasFerias").value,
         obraAtualId: document.getElementById("funcObra").value,
         status: document.getElementById("funcStatus").value,
         pin,

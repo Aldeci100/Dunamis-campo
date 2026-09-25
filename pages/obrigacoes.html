@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obrigações — Dunamis Services</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="tela">
+  <div class="topo">
+    <a href="dashboard.html" class="voltar">‹ Painel</a>
+    <h1>Obrigações</h1>
+    <span style="width:50px;"></span>
+  </div>
+
+  <div style="background:rgba(245,158,11,0.12);border:1px solid var(--warn);border-radius:var(--radius);padding:14px;font-size:13px;line-height:1.5;color:var(--text);">
+    ⚠️ Valores estimados a partir dos funcionários cadastrados e de
+    tabelas de referência do INSS (podem mudar todo ano). Confira sempre
+    com o contador antes de pagar qualquer guia.
+  </div>
+
+  <div class="ponto-status" style="margin-top:16px;padding:18px;">
+    <div class="sub">Custo total da folha este mês (ativos)</div>
+    <div class="grande" id="totalFolha" style="font-size:28px;">R$ 0,00</div>
+    <div class="sub" id="resumoFolha"></div>
+  </div>
+
+  <label style="margin-top:24px;">Folha do mês — salário, FGTS e INSS</label>
+  <div id="listaFolha" class="lista" style="margin-top:8px;"></div>
+
+  <label style="margin-top:24px;">13º salário (proporcional até hoje)</label>
+  <p class="aviso" style="text-align:left;margin-top:-4px;">
+    1ª parcela até 30/11, 2ª parcela até 20/12. FGTS incide também sobre o 13º.
+  </p>
+  <div id="lista13" class="lista" style="margin-top:8px;"></div>
+
+  <label style="margin-top:24px;">Férias — vencidas ou perto de vencer</label>
+  <p class="aviso" style="text-align:left;margin-top:-4px;">
+    Considera a data das últimas férias (ou a admissão, se nunca tirou).
+    Cadastre/atualize isso em Funcionários pra manter certo.
+  </p>
+  <div id="listaFerias" class="lista" style="margin-top:8px;"></div>
+
+  <label style="margin-top:24px;">Impostos da empresa (ICMS, ISS, DAS...)</label>
+  <div class="vazio" id="blocoImpostosEmpresa" style="text-align:left;"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-init.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/permissoes.js"></script>
+<script src="../js/dados.js"></script>
+<script src="../js/modules/obrigacoes.js?v=1"></script>
+</body>
+</html>

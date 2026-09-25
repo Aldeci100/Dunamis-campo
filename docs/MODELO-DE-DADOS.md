@@ -28,6 +28,9 @@ funcionarios/{funcionarioId}
   cpf               string
   cargo             string
   dataAdmissao      date
+  ultimasFerias     date     (opcional — início das últimas férias tiradas;
+                              sem isso, Obrigações usa a admissão como base
+                              pro período aquisitivo/concessivo)
   status            "ativo" | "inativo" | "afastado"
   telefone          string
   obraAtualId       string   (referência obras/{obraId})
@@ -216,6 +219,36 @@ valor líquido (valor − imposto da nota, usando `aliquotaImposto`) e a
 margem (líquido − custo acumulado da obra em **todos** os meses, não só
 o mês filtrado — comparar o valor total do contrato com o custo de um
 mês só daria um número errado numa obra de vários meses).
+
+## obrigacoes (painel)
+Não é coleção própria — a tela `pages/obrigacoes.html` calcula tudo na
+hora a partir de `funcionarios` (só os `status: "ativo"`). Acesso: `rh`
+e `financeiro`.
+
+- **Folha do mês**: por funcionário, `salario` (ou 0 se não cadastrado),
+  FGTS = `salario × 8%`, e INSS retido do funcionário pela tabela
+  progressiva em `FAIXAS_INSS` (js/modules/obrigacoes.js) — **essa
+  tabela é reajustada todo ano pelo governo, precisa atualizar o
+  arquivo quando isso acontecer**.
+- **13º proporcional**: avos trabalhados no ano corrente (conta o mês
+  atual se hoje já passou do dia 15, regra do "15 dias = 1 avo" da
+  CLT), aplicado sobre `salario`, mais FGTS sobre esse valor.
+- **Férias**: período aquisitivo = 12 meses a partir de `ultimasFerias`
+  (ou `dataAdmissao` se nunca tirou); período concessivo = os 12 meses
+  seguintes. Só aparece na lista quem está no período concessivo com
+  60 dias ou menos pra vencer, ou que já venceu. Como o app não
+  registra quando as férias são efetivamente tiradas, é essencial
+  atualizar `ultimasFerias` em Funcionários toda vez que alguém tira
+  férias, senão o aviso fica desatualizado.
+- **Impostos da empresa** (ICMS, ISS, DAS do Simples): **não são
+  calculados** — dependem do regime tributário e da atividade, que
+  ainda não estão configurados em lugar nenhum do sistema. A tela só
+  mostra uma referência de INSS patronal (20% da folha) pro caso de a
+  empresa não ser Simples Nacional, e um aviso pra confirmar com o
+  contador. Se um dia isso for implementado de verdade, precisa de um
+  lugar pra guardar o regime tributário (Simples/Presumido/Real, e o
+  Anexo do Simples se for o caso) e provavelmente o faturamento
+  mensal — hoje o app não tem nem um nem outro centralizado.
 
 ## usuarios
 Define o que cada pessoa pode acessar. Documento indexado pelo **e-mail

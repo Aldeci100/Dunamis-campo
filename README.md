@@ -99,8 +99,19 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   custo total por obra no mês e a margem/prejuízo contra o valor do
   contrato — *financeiro*
 - **Usuários** — libera o acesso de cada e-mail a um setor — *admin*
+- **Obrigações** — folha do mês (salário + FGTS 8% + INSS retido do
+  funcionário, tabela progressiva de referência), 13º salário proporcional
+  (avos trabalhados no ano + FGTS sobre ele) e alerta de férias vencidas ou
+  perto de vencer (com base na data das últimas férias, cadastrada em
+  Funcionários, ou na admissão se nunca tirou) — tudo calculado sozinho a
+  partir dos funcionários ativos. Impostos da empresa (ICMS, ISS, DAS) **não**
+  são calculados automaticamente — dependem do regime tributário, que a tela
+  avisa que precisa ser confirmado com o contador antes de qualquer número
+  virar pagamento — *rh*, *financeiro*
 
 ## Próximos passos (ver docs/MODELO-DE-DADOS.md)
 - Upload de foto/laudo em SST (ASO, ocorrências) — mesma ideia dos
   anexos de Obras/Navios, só falta ligar nessas telas também
 - Exportar o fechamento do Financeiro em PDF/planilha
+- Configurar o regime tributário da empresa pra habilitar o cálculo de
+  ICMS/ISS/DAS em Obrigações (hoje só mostra aviso, não calcula)
