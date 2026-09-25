@@ -85,8 +85,10 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   ponto pelo outro)
 - **Despesas** — material, transporte, aluguel, água, luz, outros, por obra,
   com total, campo de observação livre, opção de criar novos tipos próprios
-  direto no formulário ("+ Adicionar novo tipo...") e anexo de comprovante/
-  nota fiscal (botão 📎, até ~700KB, guardado no Firestore) — *financeiro*
+  direto no formulário ("+ Adicionar novo tipo..."), anexo de comprovante/
+  nota fiscal (botão 📎, até ~700KB, guardado no Firestore) e busca por
+  descrição (pra conferir rápido se uma despesa parecida já foi lançada
+  antes de cadastrar de novo) — *financeiro*
 - **Navios** — cadastro de embarcação + vendas de mercadoria/serviço por navio, com status de pagamento — *financeiro*
 - **Anexos** — nota fiscal/orçamento/comprovante anexados em Obras, Navios e
   Despesas (botão 📎, até ~700KB, guardado no Firestore)

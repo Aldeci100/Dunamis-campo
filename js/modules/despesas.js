@@ -13,6 +13,7 @@ const modal = document.getElementById("modalDespesa");
 const form = document.getElementById("formDespesa");
 const btnExcluir = document.getElementById("btnExcluirDespesa");
 const filtroObra = document.getElementById("filtroObra");
+const filtroDescricao = document.getElementById("filtroDescricao");
 const selectObraModal = document.getElementById("despesaObra");
 const totalFiltradoEl = document.getElementById("totalFiltrado");
 
@@ -124,15 +125,22 @@ function preencherSelectsObra() {
 }
 
 function renderizar() {
-    const filtradas = filtroObra.value
-        ? despesasCache.filter((d) => d.obraId === filtroObra.value)
-        : despesasCache;
+    const obraId = filtroObra.value;
+    const descricao = filtroDescricao.value.trim().toLowerCase();
+
+    const filtradas = despesasCache.filter((d) => {
+        if (obraId && d.obraId !== obraId) return false;
+        if (descricao && !(d.descricao || "").toLowerCase().includes(descricao)) return false;
+        return true;
+    });
 
     const total = filtradas.reduce((soma, d) => soma + (Number(d.valor) || 0), 0);
     totalFiltradoEl.textContent = formatarMoeda(total);
 
     if (!filtradas.length) {
-        listaEl.innerHTML = '<div class="vazio">Nenhuma despesa lançada ainda.<br>Toque no + para lançar a primeira.</div>';
+        listaEl.innerHTML = despesasCache.length
+            ? '<div class="vazio">Nenhuma despesa encontrada com esse filtro — ainda não foi lançada.</div>'
+            : '<div class="vazio">Nenhuma despesa lançada ainda.<br>Toque no + para lançar a primeira.</div>';
         return;
     }
 
@@ -197,6 +205,7 @@ document.getElementById("btnNovaDespesa").addEventListener("click", abrirNovo);
 document.getElementById("btnCancelarDespesa").addEventListener("click", fecharModal);
 modal.addEventListener("click", (e) => { if (e.target === modal) fecharModal(); });
 filtroObra.addEventListener("change", renderizar);
+filtroDescricao.addEventListener("input", renderizar);
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
