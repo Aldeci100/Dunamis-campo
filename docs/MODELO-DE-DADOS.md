@@ -221,15 +221,19 @@ o mês filtrado — comparar o valor total do contrato com o custo de um
 mês só daria um número errado numa obra de vários meses).
 
 ## obrigacoes (painel)
-Não é coleção própria — a tela `pages/obrigacoes.html` calcula tudo na
-hora a partir de `funcionarios` (só os `status: "ativo"`). Acesso: `rh`
-e `financeiro`.
+A tela `pages/obrigacoes.html` calcula tudo na hora a partir de
+`funcionarios` (só os `status: "ativo"`), `vendas_navio` e
+`configFiscal`. Acesso: `rh` e `financeiro`. Regime tributário da
+empresa: **Lucro Presumido** (confirmado pelo dono da empresa —
+se isso mudar um dia, os cálculos abaixo precisam ser revistos).
 
 - **Folha do mês**: por funcionário, `salario` (ou 0 se não cadastrado),
   FGTS = `salario × 8%`, e INSS retido do funcionário pela tabela
   progressiva em `FAIXAS_INSS` (js/modules/obrigacoes.js) — **essa
   tabela é reajustada todo ano pelo governo, precisa atualizar o
-  arquivo quando isso acontecer**.
+  arquivo quando isso acontecer**. Também soma o INSS patronal (CPP),
+  20% sobre a folha bruta — no Lucro Presumido isso é uma guia própria
+  (GPS/DCTFWeb), não vem embutido em nada.
 - **13º proporcional**: avos trabalhados no ano corrente (conta o mês
   atual se hoje já passou do dia 15, regra do "15 dias = 1 avo" da
   CLT), aplicado sobre `salario`, mais FGTS sobre esse valor.
@@ -240,15 +244,36 @@ e `financeiro`.
   registra quando as férias são efetivamente tiradas, é essencial
   atualizar `ultimasFerias` em Funcionários toda vez que alguém tira
   férias, senão o aviso fica desatualizado.
-- **Impostos da empresa** (ICMS, ISS, DAS do Simples): **não são
-  calculados** — dependem do regime tributário e da atividade, que
-  ainda não estão configurados em lugar nenhum do sistema. A tela só
-  mostra uma referência de INSS patronal (20% da folha) pro caso de a
-  empresa não ser Simples Nacional, e um aviso pra confirmar com o
-  contador. Se um dia isso for implementado de verdade, precisa de um
-  lugar pra guardar o regime tributário (Simples/Presumido/Real, e o
-  Anexo do Simples se for o caso) e provavelmente o faturamento
-  mensal — hoje o app não tem nem um nem outro centralizado.
+- **Impostos da empresa** (Lucro Presumido):
+  - **Mensais** — PIS (0,65%), COFINS (3%), ISS e ICMS, calculados
+    sobre o faturamento do mês. Faturamento de serviço = faturamento
+    manual das Obras (`configFiscal/{AAAA-MM}.faturamentoServicos`,
+    já que o app não registra nota fiscal por mês nas Obras) + vendas
+    de `vendas_navio` do mês com `tipo: "servico"`. Faturamento de
+    mercadoria = vendas de `vendas_navio` do mês com
+    `tipo: "mercadoria"`. ISS incide só sobre serviço, ICMS só sobre
+    mercadoria — alíquotas vêm de `configFiscal/geral` (variam por
+    município/estado, por isso são configuráveis, não fixas no código).
+  - **Trimestrais** — IRPJ (15% + adicional de 10% sobre o que exceder
+    R$60.000 de base presumida no trimestre) e CSLL (9%), sobre uma
+    base presumida: serviço × % de presunção configurável (padrão 32%,
+    pode ser 8% se for empreitada com fornecimento de material — por
+    isso é configurável) + mercadoria × 8% (IRPJ) ou 12% (CSLL, fixos,
+    não configuráveis). **A apuração é por trimestre calendário**
+    (Jan-Mar, Abr-Jun, Jul-Set, Out-Dez), soma os `configFiscal` dos 3
+    meses do trimestre + `vendas_navio` do período — não é mensal,
+    então não avisa "todo mês", só quando o trimestre fecha.
+```
+configFiscal/geral
+  aliquotaIss       number (%)
+  aliquotaIcms      number (%)
+  presuncaoIrpj     number (%, padrão 32 — só sobre a parte de serviço)
+  presuncaoCsll     number (%, padrão 32 — só sobre a parte de serviço)
+
+configFiscal/{AAAA-MM}
+  faturamentoServicos  number (faturamento de serviço das Obras nesse mês,
+                                digitado à mão)
+```
 
 ## usuarios
 Define o que cada pessoa pode acessar. Documento indexado pelo **e-mail

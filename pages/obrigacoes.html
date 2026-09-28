@@ -43,8 +43,58 @@
   </p>
   <div id="listaFerias" class="lista" style="margin-top:8px;"></div>
 
-  <label style="margin-top:24px;">Impostos da empresa (ICMS, ISS, DAS...)</label>
-  <div class="vazio" id="blocoImpostosEmpresa" style="text-align:left;"></div>
+  <label style="margin-top:24px;">Impostos da empresa — Lucro Presumido</label>
+  <p class="aviso" style="text-align:left;margin-top:-4px;">
+    PIS, COFINS, ISS e ICMS são apurados por mês. <b>IRPJ e CSLL são
+    apurados por trimestre</b> — não é pra pagar todo mês, o DARF sai só
+    no fim do trimestre.
+  </p>
+
+  <div class="ponto-status" style="margin-top:10px;padding:16px;text-align:left;">
+    <div class="sub" style="text-align:center;">Configurações fiscais</div>
+
+    <label style="margin-top:10px;">Alíquota do ISS (%, do seu município)</label>
+    <input type="number" id="configAliquotaIss" step="0.01" min="0" max="100" placeholder="Ex: 5">
+
+    <label>Alíquota do ICMS (%, se vender mercadoria pelos Navios)</label>
+    <input type="number" id="configAliquotaIcms" step="0.01" min="0" max="100" placeholder="Ex: 18">
+
+    <label>% de presunção do IRPJ sobre serviços</label>
+    <input type="number" id="configPresuncaoIrpj" step="0.01" min="0" max="100" placeholder="32">
+    <p class="aviso" style="text-align:left;margin-top:2px;">
+      32% é o padrão pra prestação de serviço. Se for empreitada com
+      fornecimento de material (obra), pode cair pra 8% — confirme com
+      o contador qual se aplica ao seu caso antes de mudar isso.
+    </p>
+
+    <label>% de presunção da CSLL sobre serviços</label>
+    <input type="number" id="configPresuncaoCsll" step="0.01" min="0" max="100" placeholder="32">
+
+    <button type="button" class="btn-secundaria" id="btnSalvarConfigFiscal" style="margin-top:14px;">Salvar configurações</button>
+  </div>
+
+  <div class="ponto-status" style="margin-top:14px;padding:16px;text-align:left;">
+    <div class="sub" style="text-align:center;">Faturamento de serviços das Obras neste mês</div>
+    <p class="aviso" style="text-align:left;margin-top:2px;">
+      O app não registra nota fiscal por mês nas Obras — digite aqui
+      quanto foi faturado de serviço (obras) neste mês pra entrar no
+      cálculo. As vendas dos Navios entram sozinhas, automaticamente.
+    </p>
+    <input type="number" id="faturamentoServicosMes" step="0.01" min="0" placeholder="Ex: 15000.00">
+    <button type="button" class="btn-secundaria" id="btnSalvarFaturamento" style="margin-top:10px;">Salvar faturamento do mês</button>
+  </div>
+
+  <div class="ponto-status" style="margin-top:14px;padding:16px;">
+    <div class="sub">Impostos deste mês (PIS + COFINS + ISS + ICMS)</div>
+    <div class="grande" id="totalImpostosMes" style="font-size:24px;">R$ 0,00</div>
+    <div class="sub" id="detalheImpostosMes"></div>
+  </div>
+
+  <div class="ponto-status" style="margin-top:14px;padding:16px;">
+    <div class="sub">Impostos deste trimestre (IRPJ + CSLL) — apuração trimestral</div>
+    <div class="grande" id="totalImpostosTri" style="font-size:24px;">R$ 0,00</div>
+    <div class="sub" id="detalheImpostosTri"></div>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -54,6 +104,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/obrigacoes.js?v=1"></script>
+<script src="../js/modules/obrigacoes.js?v=3"></script>
 </body>
 </html>

@@ -91,7 +91,21 @@ service cloud.firestore {
     }
 
     match /vendas_navio/{id} {
-      allow read, create, update: if temPapel(['financeiro']);
+      // leitura liberada pro rh também: a tela Obrigações (rh + financeiro)
+      // soma essas vendas pra estimar PIS/COFINS/ISS/ICMS do mês.
+      allow read: if temPapel(['rh', 'financeiro']);
+      allow create, update: if temPapel(['financeiro']);
+      allow delete: if ehAdmin();
+    }
+
+    // Configurações fiscais (alíquotas de ISS/ICMS, % de presunção de
+    // IRPJ/CSLL) e faturamento de serviços das Obras por mês (a tela
+    // Obrigações usa isso pra estimar os impostos da empresa, Lucro
+    // Presumido). Doc "geral" guarda as alíquotas; docs "AAAA-MM" guardam
+    // o faturamento de cada mês.
+    match /configFiscal/{id} {
+      allow read: if temPapel(['rh', 'financeiro']);
+      allow create, update: if temPapel(['financeiro']);
       allow delete: if ehAdmin();
     }
 
