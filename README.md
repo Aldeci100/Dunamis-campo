@@ -2,7 +2,11 @@
 
 App (PWA) para controlar obras, ponto de funcionários de campo, RH e SST.
 Funciona instalado no celular (Adicionar à tela de início), sem precisar
-de loja de aplicativo.
+de loja de aplicativo. Layout responsivo: no celular fica em uma coluna
+só (mobile-first, essencial pro Ponto em campo); em telas largas
+(computador, a partir de ~860px), as listas e cards viram grade de
+várias colunas pra aproveitar o espaço horizontal, em vez de ficar tudo
+empilhado numa coluna estreita com rolagem comprida.
 
 ## Como testar agora (modo local, sem Firebase)
 

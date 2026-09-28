@@ -11,6 +11,7 @@
   --warn: #f59e0b;
   --danger: #ef4444;
   --radius: 14px;
+  --tela-max-width: 480px; /* redefinido em telas largas, ver media query no fim do arquivo */
 }
 
 * { box-sizing: border-box; }
@@ -24,7 +25,7 @@ body {
 }
 
 .tela {
-  max-width: 480px;
+  max-width: var(--tela-max-width);
   margin: 0 auto;
   padding: 20px 16px 90px;
   min-height: 100vh;
@@ -163,6 +164,14 @@ button {
   margin-top: 16px;
 }
 
+/* Agrupa 2 cards lado a lado em telas largas; no celular empilha
+   normal, um embaixo do outro (ver media query no fim do arquivo). */
+.grade-2 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .item {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -235,8 +244,10 @@ button {
 .fab {
   position: fixed;
   bottom: 24px;
-  right: 50%;
-  transform: translateX(calc(240px - 24px));
+  /* fica a 20px da borda direita da .tela, seja qual for a largura dela;
+     em telas estreitas (.tela ocupa a viewport inteira) cai pra 20px da
+     borda da tela mesmo, sem precisar de media query separada */
+  right: max(20px, calc((100vw - var(--tela-max-width)) / 2 + 20px));
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -247,10 +258,6 @@ button {
   align-items: center;
   justify-content: center;
   box-shadow: 0 6px 18px rgba(0,0,0,0.4);
-}
-
-@media (max-width: 520px) {
-  .fab { right: 20px; transform: none; }
 }
 
 .modal-fundo {
@@ -361,4 +368,28 @@ button {
 
 .rodape-nav a.ativo {
   color: var(--accent);
+}
+
+/* Telas largas (computador): aproveita o espaço horizontal em vez de
+   ficar com uma coluna estreita centralizada e rolagem comprida. No
+   celular (abaixo do breakpoint) nada muda — continua uma coluna só,
+   igual sempre foi, inclusive o Ponto pra quem tá em campo. */
+@media (min-width: 860px) {
+  :root { --tela-max-width: 1100px; }
+
+  .lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    align-items: start;
+  }
+
+  .grade-cards {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .grade-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
 }
