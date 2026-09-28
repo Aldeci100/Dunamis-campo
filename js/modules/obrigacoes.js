@@ -489,7 +489,26 @@ document.getElementById("btnSalvarFaturamento").addEventListener("click", async 
     }, mesIso);
 });
 
+const relatorioMesLabelEl = document.getElementById("relatorioMesLabel");
+
+function atualizarLabelRelatorioMes() {
+    const mesIso = inputRelatorioMes.value || new Date().toISOString().slice(0, 7);
+    relatorioMesLabelEl.textContent = nomeMes(mesIso);
+}
+
+function mudarMesRelatorio(delta) {
+    const atual = inputRelatorioMes.value || new Date().toISOString().slice(0, 7);
+    const [ano, mes] = atual.split("-").map(Number);
+    const nova = new Date(ano, mes - 1 + delta, 1);
+    inputRelatorioMes.value = nova.toISOString().slice(0, 7);
+    atualizarLabelRelatorioMes();
+}
+
 inputRelatorioMes.value = new Date().toISOString().slice(0, 7);
+atualizarLabelRelatorioMes();
+inputRelatorioMes.addEventListener("change", atualizarLabelRelatorioMes);
+document.getElementById("btnMesAnterior").addEventListener("click", () => mudarMesRelatorio(-1));
+document.getElementById("btnMesProximo").addEventListener("click", () => mudarMesRelatorio(1));
 document.getElementById("btnGerarRelatorio").addEventListener("click", gerarRelatorioPdf);
 
 observarColecao("funcionarios", (l) => {

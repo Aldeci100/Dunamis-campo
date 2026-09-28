@@ -103,7 +103,12 @@
     num relatório pra imprimir ou salvar como PDF.
   </p>
   <label style="margin-top:10px;">Mês do relatório</label>
-  <input type="month" id="relatorioMes">
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button type="button" class="btn-secundaria" id="btnMesAnterior" style="width:auto;padding:14px 16px;">◀</button>
+    <input type="month" id="relatorioMes" style="flex:1;">
+    <button type="button" class="btn-secundaria" id="btnMesProximo" style="width:auto;padding:14px 16px;">▶</button>
+  </div>
+  <div class="sub" id="relatorioMesLabel" style="text-align:center;margin-top:6px;"></div>
   <button type="button" class="btn-primaria" id="btnGerarRelatorio" style="margin-top:14px;">🖨️ Gerar relatório PDF</button>
 </div>
 
@@ -114,6 +119,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/obrigacoes.js?v=5"></script>
+<script src="../js/modules/obrigacoes.js?v=6"></script>
 </body>
 </html>
