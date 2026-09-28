@@ -165,6 +165,28 @@ pro plano Blaze), dá pra reaproveitar boa parte disso — só troca como
 `enviarAnexo()` salva o arquivo, o resto (listagem, exclusão, telas)
 continua igual.
 
+## notasFiscais
+Registro financeiro da NF emitida (valor + datas) em Obras (botão
+🧾, admin) e Navios (botão 🧾, financeiro) — diferente de `anexos`
+(que guarda o arquivo/PDF em si, sem valor nem data de faturamento).
+Módulo compartilhado em [js/notas-fiscais.js](../js/notas-fiscais.js).
+```
+notasFiscais/{id}
+  entidadeTipo     "obra" | "navio"
+  entidadeId       string   (obraId ou navioId)
+  numero           string   (opcional)
+  valor            number
+  dataEmissao      date     (opcional)
+  dataFaturamento  date     (obrigatório — quando a NF vai ser faturada)
+  observacao       string   (opcional)
+  criadoEm         number   (Date.now() na criação, não muda ao editar)
+```
+**Só as NFs de Obras entram no cálculo de Obrigações** (somadas pela
+`dataFaturamento`, dentro do mês/trimestre pedido). NFs de Navios são
+só registro/referência — o faturamento de Navios pra impostos já vem
+de `vendas_navio`, então somar as NFs de novo contaria a mesma receita
+em dobro.
+
 ## sst (segurança do trabalho)
 Tela única com 4 abas. Cada uma com badge de vencido/vencendo/válido
 calculado a partir da data de validade (não fica salvo, é calculado
@@ -246,11 +268,12 @@ se isso mudar um dia, os cálculos abaixo precisam ser revistos).
   férias, senão o aviso fica desatualizado.
 - **Impostos da empresa** (Lucro Presumido):
   - **Mensais** — PIS (0,65%), COFINS (3%), ISS e ICMS, calculados
-    sobre o faturamento do mês. Faturamento de serviço = faturamento
-    manual das Obras (`configFiscal/{AAAA-MM}.faturamentoServicos`,
-    já que o app não registra nota fiscal por mês nas Obras) + vendas
-    de `vendas_navio` do mês com `tipo: "servico"`. Faturamento de
-    mercadoria = vendas de `vendas_navio` do mês com
+    sobre o faturamento do mês. Faturamento de serviço = NFs de Obras
+    (`notasFiscais`, `entidadeTipo: "obra"`) com `dataFaturamento`
+    dentro do mês + `configFiscal/{AAAA-MM}.faturamentoServicos`
+    (complemento manual, pra faturamento sem NF cadastrada ainda) +
+    vendas de `vendas_navio` do mês com `tipo: "servico"`. Faturamento
+    de mercadoria = vendas de `vendas_navio` do mês com
     `tipo: "mercadoria"`. ISS incide só sobre serviço, ICMS só sobre
     mercadoria — alíquotas vêm de `configFiscal/geral` (variam por
     município/estado, por isso são configuráveis, não fixas no código).
@@ -260,9 +283,10 @@ se isso mudar um dia, os cálculos abaixo precisam ser revistos).
     pode ser 8% se for empreitada com fornecimento de material — por
     isso é configurável) + mercadoria × 8% (IRPJ) ou 12% (CSLL, fixos,
     não configuráveis). **A apuração é por trimestre calendário**
-    (Jan-Mar, Abr-Jun, Jul-Set, Out-Dez), soma os `configFiscal` dos 3
-    meses do trimestre + `vendas_navio` do período — não é mensal,
-    então não avisa "todo mês", só quando o trimestre fecha.
+    (Jan-Mar, Abr-Jun, Jul-Set, Out-Dez), soma as `notasFiscais` de
+    Obras + `configFiscal` dos 3 meses do trimestre + `vendas_navio`
+    do período — não é mensal, então não avisa "todo mês", só quando
+    o trimestre fecha.
 ```
 configFiscal/geral
   aliquotaIss       number (%)

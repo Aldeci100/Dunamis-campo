@@ -144,6 +144,50 @@
   </div>
 </div>
 
+<!-- Notas fiscais do navio -->
+<div class="modal-fundo" id="modalNotasFiscais" style="display:none;">
+  <div class="modal-caixa">
+    <h2 id="tituloModalNf">Nova nota fiscal</h2>
+    <div class="sub" id="nfNomeNavio" style="margin-top:-8px;"></div>
+
+    <form id="formNotaFiscal" style="margin-top:16px;">
+      <input type="hidden" id="nfId">
+
+      <label style="margin-top:0;">Número da NF (opcional)</label>
+      <input type="text" id="nfNumero" placeholder="Ex: 1234">
+
+      <label>Valor (R$)</label>
+      <input type="number" id="nfValor" step="0.01" min="0" required>
+
+      <div class="linha-2">
+        <div>
+          <label>Data de emissão</label>
+          <input type="date" id="nfDataEmissao">
+        </div>
+        <div>
+          <label>Data de faturamento</label>
+          <input type="date" id="nfDataFaturamento" required>
+        </div>
+      </div>
+      <p class="aviso" style="text-align:left;margin-top:6px;">
+        Só de referência — o faturamento dos Navios pra impostos já vem
+        das Vendas lançadas acima, pra não contar em dobro.
+      </p>
+
+      <label>Observação (opcional)</label>
+      <input type="text" id="nfObservacao">
+
+      <button type="submit" class="btn-primaria" style="margin-top:16px;">Salvar nota fiscal</button>
+      <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarNf">Cancelar</button>
+    </form>
+
+    <label style="margin-top:22px;">Notas fiscais lançadas</label>
+    <div id="listaNotasFiscaisNavio" class="lista" style="margin-top:8px;"></div>
+
+    <button type="button" class="btn-secundaria" style="margin-top:14px;" id="btnFecharNf">Fechar</button>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -152,6 +196,7 @@
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
 <script src="../js/anexos.js?v=3"></script>
-<script src="../js/modules/navios.js?v=2"></script>
+<script src="../js/notas-fiscais.js?v=1"></script>
+<script src="../js/modules/navios.js?v=3"></script>
 </body>
 </html>

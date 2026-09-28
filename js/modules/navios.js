@@ -21,8 +21,10 @@ const rotuloPagamento = { pendente: "Pendente", pago: "Pago" };
 let naviosCache = [];
 let vendasCache = [];
 let anexosCache = [];
+let notasFiscaisCache = [];
 let navioVendasAtual = null;
 let navioAnexosAtual = null;
+let navioNfAtual = null;
 
 function formatarMoeda(valor) {
     return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -61,7 +63,10 @@ function renderizarNavios() {
                 <button type="button" class="btn-secundaria btn-editar-navio" data-id="${n.id}">✏️ Editar</button>
                 <button type="button" class="btn-secundaria btn-vendas" data-id="${n.id}">💰 Vendas</button>
             </div>
-            <button type="button" class="btn-secundaria btn-anexos" data-id="${n.id}" style="margin-top:8px;">📎 Anexos</button>
+            <div class="linha-2" style="margin-top:8px;">
+                <button type="button" class="btn-secundaria btn-anexos" data-id="${n.id}">📎 Anexos</button>
+                <button type="button" class="btn-secundaria btn-nf" data-id="${n.id}">🧾 Notas Fiscais</button>
+            </div>
         </div>
     `).join("");
 
@@ -75,6 +80,10 @@ function renderizarNavios() {
 
     listaEl.querySelectorAll(".btn-anexos").forEach((btn) => {
         btn.addEventListener("click", () => abrirModalAnexos(naviosCache.find((n) => n.id === btn.dataset.id)));
+    });
+
+    listaEl.querySelectorAll(".btn-nf").forEach((btn) => {
+        btn.addEventListener("click", () => abrirModalNf(naviosCache.find((n) => n.id === btn.dataset.id)));
     });
 }
 
@@ -282,6 +291,79 @@ formAnexo.addEventListener("submit", async (e) => {
     }
 });
 
+// ---------- Notas fiscais (valor + data de faturamento) ----------
+
+const modalNf = document.getElementById("modalNotasFiscais");
+const formNf = document.getElementById("formNotaFiscal");
+const listaNfEl = document.getElementById("listaNotasFiscaisNavio");
+
+function abrirModalNf(navio) {
+    if (!navio) return;
+    navioNfAtual = navio;
+    document.getElementById("nfNomeNavio").textContent = navio.nome;
+    fecharFormNf();
+    renderizarNotasFiscais();
+    modalNf.style.display = "flex";
+}
+
+function fecharFormNf() {
+    formNf.reset();
+    document.getElementById("nfId").value = "";
+    document.getElementById("tituloModalNf").textContent = "Nova nota fiscal";
+}
+
+function renderizarNotasFiscais() {
+    if (!navioNfAtual) return;
+    const notas = notasFiscaisCache
+        .filter((n) => n.entidadeTipo === "navio" && n.entidadeId === navioNfAtual.id)
+        .sort((a, b) => (b.dataFaturamento || "").localeCompare(a.dataFaturamento || ""));
+
+    listaNfEl.innerHTML = htmlListaNotasFiscais(notas);
+
+    listaNfEl.querySelectorAll(".btn-editar-nf").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const nf = notas.find((n) => n.id === btn.dataset.id);
+            if (!nf) return;
+            document.getElementById("nfId").value = nf.id;
+            document.getElementById("nfNumero").value = nf.numero || "";
+            document.getElementById("nfValor").value = nf.valor ?? "";
+            document.getElementById("nfDataEmissao").value = nf.dataEmissao || "";
+            document.getElementById("nfDataFaturamento").value = nf.dataFaturamento || "";
+            document.getElementById("nfObservacao").value = nf.observacao || "";
+            document.getElementById("tituloModalNf").textContent = "Editar nota fiscal";
+        });
+    });
+
+    listaNfEl.querySelectorAll(".btn-excluir-nf").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("Excluir esta nota fiscal?")) return;
+            await excluirNotaFiscal(btn.dataset.id);
+        });
+    });
+}
+
+document.getElementById("btnFecharNf").addEventListener("click", () => {
+    modalNf.style.display = "none";
+});
+document.getElementById("btnCancelarNf").addEventListener("click", fecharFormNf);
+modalNf.addEventListener("click", (e) => { if (e.target === modalNf) modalNf.style.display = "none"; });
+
+formNf.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!navioNfAtual) return;
+
+    const id = document.getElementById("nfId").value || null;
+    await salvarNotaFiscal("navio", navioNfAtual.id, {
+        numero: document.getElementById("nfNumero").value.trim(),
+        valor: document.getElementById("nfValor").value,
+        dataEmissao: document.getElementById("nfDataEmissao").value,
+        dataFaturamento: document.getElementById("nfDataFaturamento").value,
+        observacao: document.getElementById("nfObservacao").value.trim(),
+    }, id);
+
+    fecharFormNf();
+});
+
 observarColecao(COLECAO, (navios) => {
     naviosCache = navios;
     renderizarNavios();
@@ -296,6 +378,11 @@ observarColecao(COLECAO_VENDAS, (vendas) => {
 observarColecao("anexos", (anexos) => {
     anexosCache = anexos;
     if (modalAnexos.style.display === "flex") renderizarAnexos();
+});
+
+observarColecao("notasFiscais", (l) => {
+    notasFiscaisCache = l;
+    if (modalNf.style.display === "flex") renderizarNotasFiscais();
 });
 
 })();

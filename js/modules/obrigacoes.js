@@ -59,8 +59,9 @@ const CSLL_ALIQUOTA = 0.09;
 
 let funcionariosCache = [];
 let vendasNavioCache = [];
+let notasFiscaisCache = [];
 let configGeral = { aliquotaIss: 0, aliquotaIcms: 0, presuncaoIrpj: 32, presuncaoCsll: 32 };
-let faturamentoPorMes = {}; // { "2026-09": 15000 }
+let faturamentoPorMes = {}; // { "2026-09": 15000 } — complemento manual, além das notas fiscais
 
 function formatarMoeda(valor) {
     return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -249,6 +250,14 @@ function somaVendasNavioPorTipo(tipo, inicioIso, fimIsoExclusivo) {
         .reduce((soma, v) => soma + (Number(v.valorTotal) || 0), 0);
 }
 
+// Só notas de OBRA entram aqui — notas de navio não contam pra não
+// duplicar com vendas_navio, que já alimenta o cálculo sozinho.
+function somaNotasFiscaisObra(inicioIso, fimIsoExclusivo) {
+    return notasFiscaisCache
+        .filter((n) => n.entidadeTipo === "obra" && n.dataFaturamento >= inicioIso && n.dataFaturamento < fimIsoExclusivo)
+        .reduce((soma, n) => soma + (Number(n.valor) || 0), 0);
+}
+
 function limitesMes(mesIso) {
     const [ano, mes] = mesIso.split("-").map(Number);
     const inicio = new Date(ano, mes - 1, 1);
@@ -273,7 +282,7 @@ function limitesTrimestre(mesIso) {
 // ---- mensal: PIS, COFINS, ISS, ICMS, sobre o faturamento do mês ----
 function calcularImpostosMensais(mesIso) {
     const { inicioIso, fimIso } = limitesMes(mesIso);
-    const servicosObras = faturamentoPorMes[mesIso] || 0;
+    const servicosObras = (faturamentoPorMes[mesIso] || 0) + somaNotasFiscaisObra(inicioIso, fimIso);
     const servicosNavios = somaVendasNavioPorTipo("servico", inicioIso, fimIso);
     const mercadorias = somaVendasNavioPorTipo("mercadoria", inicioIso, fimIso);
     const servicos = servicosObras + servicosNavios;
@@ -292,7 +301,7 @@ function calcularImpostosMensais(mesIso) {
 function calcularImpostosTrimestrais(mesIso) {
     const { inicioIso, fimIso, numero, ano, primeiroMesIndex } = limitesTrimestre(mesIso);
 
-    let servicosObras = 0;
+    let servicosObras = somaNotasFiscaisObra(inicioIso, fimIso);
     for (let m = 0; m < 3; m++) {
         const chave = new Date(ano, primeiroMesIndex + m, 1).toISOString().slice(0, 7);
         servicosObras += faturamentoPorMes[chave] || 0;
@@ -490,6 +499,11 @@ observarColecao("funcionarios", (l) => {
 
 observarColecao("vendas_navio", (l) => {
     vendasNavioCache = l;
+    renderizarImpostosEmpresa();
+});
+
+observarColecao("notasFiscais", (l) => {
+    notasFiscaisCache = l;
     renderizarImpostosEmpresa();
 });
 

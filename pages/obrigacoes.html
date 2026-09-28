@@ -74,11 +74,12 @@
   </div>
 
   <div class="ponto-status" style="margin-top:14px;padding:16px;text-align:left;">
-    <div class="sub" style="text-align:center;">Faturamento de serviços das Obras neste mês</div>
+    <div class="sub" style="text-align:center;">Faturamento de serviços das Obras neste mês (complemento manual)</div>
     <p class="aviso" style="text-align:left;margin-top:2px;">
-      O app não registra nota fiscal por mês nas Obras — digite aqui
-      quanto foi faturado de serviço (obras) neste mês pra entrar no
-      cálculo. As vendas dos Navios entram sozinhas, automaticamente.
+      As Notas Fiscais lançadas em cada Obra (botão 🧾 Notas Fiscais)
+      já entram sozinhas no cálculo, pela data de faturamento delas.
+      Use este campo só como complemento pra faturamento que ainda não
+      tem NF cadastrada. As vendas dos Navios também entram sozinhas.
     </p>
     <input type="number" id="faturamentoServicosMes" step="0.01" min="0" placeholder="Ex: 15000.00">
     <button type="button" class="btn-secundaria" id="btnSalvarFaturamento" style="margin-top:10px;">Salvar faturamento do mês</button>
@@ -113,6 +114,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/obrigacoes.js?v=4"></script>
+<script src="../js/modules/obrigacoes.js?v=5"></script>
 </body>
 </html>

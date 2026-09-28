@@ -22,6 +22,8 @@ let despesasCache = [];
 let tiposDespesaCache = [];
 let anexosCache = [];
 let obraAnexosAtual = null;
+let notasFiscaisCache = [];
+let obraNfAtual = null;
 
 const rotuloStatus = {
     planejada: "Planejada",
@@ -113,6 +115,7 @@ function renderizarListaFiltrada() {
                 <button type="button" class="btn-secundaria btn-relatorio" data-id="${o.id}">📄 Relatório</button>
                 <button type="button" class="btn-secundaria btn-anexos" data-id="${o.id}">📎 Anexos</button>
             </div>
+            <button type="button" class="btn-secundaria btn-nf" data-id="${o.id}" style="margin-top:8px;">🧾 Notas Fiscais</button>
         </div>
     `;
     }).join("");
@@ -132,6 +135,13 @@ function renderizarListaFiltrada() {
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
             abrirModalAnexos(obras.find((o) => o.id === btn.dataset.id));
+        });
+    });
+
+    listaEl.querySelectorAll(".btn-nf").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            abrirModalNf(obras.find((o) => o.id === btn.dataset.id));
         });
     });
 
@@ -455,6 +465,79 @@ formAnexo.addEventListener("submit", async (e) => {
     }
 });
 
+// ---------- Notas fiscais (valor + data de faturamento) ----------
+
+const modalNf = document.getElementById("modalNotasFiscais");
+const formNf = document.getElementById("formNotaFiscal");
+const listaNfEl = document.getElementById("listaNotasFiscaisObra");
+
+function abrirModalNf(obra) {
+    if (!obra) return;
+    obraNfAtual = obra;
+    document.getElementById("nfNomeObra").textContent = obra.nome;
+    fecharFormNf();
+    renderizarNotasFiscais();
+    modalNf.style.display = "flex";
+}
+
+function fecharFormNf() {
+    formNf.reset();
+    document.getElementById("nfId").value = "";
+    document.getElementById("tituloModalNf").textContent = "Nova nota fiscal";
+}
+
+function renderizarNotasFiscais() {
+    if (!obraNfAtual) return;
+    const notas = notasFiscaisCache
+        .filter((n) => n.entidadeTipo === "obra" && n.entidadeId === obraNfAtual.id)
+        .sort((a, b) => (b.dataFaturamento || "").localeCompare(a.dataFaturamento || ""));
+
+    listaNfEl.innerHTML = htmlListaNotasFiscais(notas);
+
+    listaNfEl.querySelectorAll(".btn-editar-nf").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const nf = notas.find((n) => n.id === btn.dataset.id);
+            if (!nf) return;
+            document.getElementById("nfId").value = nf.id;
+            document.getElementById("nfNumero").value = nf.numero || "";
+            document.getElementById("nfValor").value = nf.valor ?? "";
+            document.getElementById("nfDataEmissao").value = nf.dataEmissao || "";
+            document.getElementById("nfDataFaturamento").value = nf.dataFaturamento || "";
+            document.getElementById("nfObservacao").value = nf.observacao || "";
+            document.getElementById("tituloModalNf").textContent = "Editar nota fiscal";
+        });
+    });
+
+    listaNfEl.querySelectorAll(".btn-excluir-nf").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            if (!confirm("Excluir esta nota fiscal?")) return;
+            await excluirNotaFiscal(btn.dataset.id);
+        });
+    });
+}
+
+document.getElementById("btnFecharNf").addEventListener("click", () => {
+    modalNf.style.display = "none";
+});
+document.getElementById("btnCancelarNf").addEventListener("click", fecharFormNf);
+modalNf.addEventListener("click", (e) => { if (e.target === modalNf) modalNf.style.display = "none"; });
+
+formNf.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!obraNfAtual) return;
+
+    const id = document.getElementById("nfId").value || null;
+    await salvarNotaFiscal("obra", obraNfAtual.id, {
+        numero: document.getElementById("nfNumero").value.trim(),
+        valor: document.getElementById("nfValor").value,
+        dataEmissao: document.getElementById("nfDataEmissao").value,
+        dataFaturamento: document.getElementById("nfDataFaturamento").value,
+        observacao: document.getElementById("nfObservacao").value.trim(),
+    }, id);
+
+    fecharFormNf();
+});
+
 observarColecao(COLECAO, renderizarObras);
 observarColecao("funcionarios", (l) => { funcionariosCache = l; });
 observarColecao("pontos", (l) => { pontosCache = l; });
@@ -463,6 +546,10 @@ observarColecao("tiposDespesa", (l) => { tiposDespesaCache = l; });
 observarColecao("anexos", (l) => {
     anexosCache = l;
     if (modalAnexos.style.display === "flex") renderizarAnexos();
+});
+observarColecao("notasFiscais", (l) => {
+    notasFiscaisCache = l;
+    if (modalNf.style.display === "flex") renderizarNotasFiscais();
 });
 
 })();

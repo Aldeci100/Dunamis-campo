@@ -109,6 +109,17 @@ service cloud.firestore {
       allow delete: if ehAdmin();
     }
 
+    // Notas fiscais emitidas (valor + data de emissão + data de
+    // faturamento) de Obras (admin) e Navios (financeiro) — registro
+    // financeiro, diferente de anexos (que guarda o arquivo). Leitura
+    // liberada pro rh também: Obrigações soma as de Obras pela data de
+    // faturamento pra estimar o faturamento do mês.
+    match /notasFiscais/{id} {
+      allow read: if temPapel(['rh', 'admin', 'financeiro']);
+      allow create, update: if temPapel(['admin', 'financeiro']);
+      allow delete: if ehAdmin();
+    }
+
     // Anexos (nota fiscal, orçamento, comprovante) de Obras, Navios e
     // Despesas. O arquivo inteiro fica dentro do documento, em base64
     // (sem depender do Storage, que só está disponível no plano pago

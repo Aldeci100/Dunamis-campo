@@ -72,7 +72,10 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   já calculando margem ou prejuízo — *admin*. Na mão de obra, funcionário
   **atualmente alocado** à obra entra pelo salário mensal (× meses corridos
   desde o início da obra); quem não está alocado mas tem ponto batido ali
-  (ex: terceirizado avulso) entra pelas horas × custo/hora
+  (ex: terceirizado avulso) entra pelas horas × custo/hora. Botão
+  🧾 Notas Fiscais registra número, valor, data de emissão e **data de
+  faturamento** de cada NF emitida — essa data alimenta sozinha o cálculo
+  de impostos do mês em Obrigações
 - **Funcionários** — cadastro, obra atual, direito a vale-transporte/alimentação,
   espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos
   estão em cada obra, sempre com o total geral independente de filtro), busca
@@ -89,7 +92,10 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   nota fiscal (botão 📎, até ~700KB, guardado no Firestore) e busca por
   descrição (pra conferir rápido se uma despesa parecida já foi lançada
   antes de cadastrar de novo) — *financeiro*
-- **Navios** — cadastro de embarcação + vendas de mercadoria/serviço por navio, com status de pagamento — *financeiro*
+- **Navios** — cadastro de embarcação + vendas de mercadoria/serviço por navio, com
+  status de pagamento e botão 🧾 Notas Fiscais (registro de NF emitida, só de
+  referência — o faturamento pra impostos já vem das Vendas, pra não contar
+  em dobro) — *financeiro*
 - **Anexos** — nota fiscal/orçamento/comprovante anexados em Obras, Navios e
   Despesas (botão 📎, até ~700KB, guardado no Firestore)
 - **SST** — ASO, EPI, treinamentos (NR-35 etc.) e ocorrências, com aviso de vencido/vencendo — *sst*
@@ -106,9 +112,10 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   últimas férias, cadastrada em Funcionários, ou na admissão se nunca
   tirou) — tudo calculado sozinho a partir dos funcionários ativos.
   Impostos da empresa (regime **Lucro Presumido**): PIS (0,65%), COFINS
-  (3%), ISS e ICMS calculados por mês sobre o faturamento (vendas dos
-  Navios entram sozinhas; faturamento de serviço das Obras é digitado à
-  mão, já que o app não registra nota fiscal por mês); IRPJ (15% + adicional
+  (3%), ISS e ICMS calculados por mês sobre o faturamento (Notas Fiscais de
+  Obras entram pela data de faturamento delas + vendas dos Navios, ambos
+  automaticamente; um campo manual complementa faturamento sem NF
+  cadastrada ainda); IRPJ (15% + adicional
   de 10% acima de R$60.000) e CSLL (9%) calculados por **trimestre**
   (apuração real do Lucro Presumido, não é mensal). Alíquotas de ISS/ICMS e
   % de presunção de IRPJ/CSLL são configuráveis na própria tela — confirme
