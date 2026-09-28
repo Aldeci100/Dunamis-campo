@@ -215,6 +215,8 @@ function abrirEdicao(f) {
     campoSalario.value = f.salario ?? "";
     campoCustoHora.value = f.custoHora ?? "";
     atualizarCustoHora();
+    document.getElementById("funcPericulosidade").value = f.periculosidade ?? "";
+    document.getElementById("funcInsalubridade").value = f.insalubridade ?? "";
     document.getElementById("funcValeTransporte").checked = !!f.beneficios?.valeTransporte;
     document.getElementById("funcValeAlimentacao").checked = !!f.beneficios?.valeAlimentacao;
     document.getElementById("funcMotivoExclusao").value = f.beneficios?.motivoExclusao || "";
@@ -253,6 +255,8 @@ form.addEventListener("submit", async (e) => {
         pin,
         salario: Number(campoSalario.value) || 0,
         custoHora: Number(campoCustoHora.value) || 0,
+        periculosidade: Number(document.getElementById("funcPericulosidade").value) || 0,
+        insalubridade: Number(document.getElementById("funcInsalubridade").value) || 0,
         beneficios: {
             valeTransporte: document.getElementById("funcValeTransporte").checked,
             valeAlimentacao: document.getElementById("funcValeAlimentacao").checked,

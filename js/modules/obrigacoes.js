@@ -23,6 +23,7 @@ const inputAliquotaIss = document.getElementById("configAliquotaIss");
 const inputAliquotaIcms = document.getElementById("configAliquotaIcms");
 const inputPresuncaoIrpj = document.getElementById("configPresuncaoIrpj");
 const inputPresuncaoCsll = document.getElementById("configPresuncaoCsll");
+const inputSalarioMinimo = document.getElementById("configSalarioMinimo");
 const inputFaturamentoMes = document.getElementById("faturamentoServicosMes");
 const inputRelatorioMes = document.getElementById("relatorioMes");
 const totalImpostosMesEl = document.getElementById("totalImpostosMes");
@@ -60,7 +61,7 @@ const CSLL_ALIQUOTA = 0.09;
 let funcionariosCache = [];
 let vendasNavioCache = [];
 let notasFiscaisCache = [];
-let configGeral = { aliquotaIss: 0, aliquotaIcms: 0, presuncaoIrpj: 32, presuncaoCsll: 32 };
+let configGeral = { aliquotaIss: 0, aliquotaIcms: 0, presuncaoIrpj: 32, presuncaoCsll: 32, salarioMinimo: 0 };
 let faturamentoPorMes = {}; // { "2026-09": 15000 } — complemento manual, além das notas fiscais
 
 function formatarMoeda(valor) {
@@ -94,6 +95,22 @@ function calcularInss(salario) {
     return inss;
 }
 
+// Periculosidade (CLT art. 193): % sobre o salário-base do próprio
+// funcionário. Insalubridade (CLT art. 192): % sobre o salário mínimo
+// nacional (configGeral.salarioMinimo), não sobre o salário dele. Os
+// dois têm natureza salarial — entram na base de FGTS, INSS e 13º.
+function valorPericulosidade(f) {
+    return (f.salario || 0) * ((f.periculosidade || 0) / 100);
+}
+
+function valorInsalubridade(f) {
+    return (configGeral.salarioMinimo || 0) * ((f.insalubridade || 0) / 100);
+}
+
+function remuneracaoTotal(f) {
+    return (f.salario || 0) + valorPericulosidade(f) + valorInsalubridade(f);
+}
+
 function renderizarFolha(ativos) {
     if (!ativos.length) {
         listaFolhaEl.innerHTML = '<div class="vazio">Nenhum funcionário ativo cadastrado.</div>';
@@ -102,18 +119,25 @@ function renderizarFolha(ativos) {
         return;
     }
 
-    let totalSalarios = 0, totalFgts = 0, totalInss = 0;
+    let totalRemuneracao = 0, totalFgts = 0, totalInss = 0;
 
     listaFolhaEl.innerHTML = ativos
         .slice()
         .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""))
         .map((f) => {
             const salario = f.salario || 0;
-            const fgts = salario * FGTS_PERCENTUAL;
-            const inss = calcularInss(salario);
-            totalSalarios += salario;
+            const periculosidade = valorPericulosidade(f);
+            const insalubridade = valorInsalubridade(f);
+            const remuneracao = remuneracaoTotal(f);
+            const fgts = remuneracao * FGTS_PERCENTUAL;
+            const inss = calcularInss(remuneracao);
+            totalRemuneracao += remuneracao;
             totalFgts += fgts;
             totalInss += inss;
+
+            const adicionais = [];
+            if (periculosidade) adicionais.push(`Periculosidade (${f.periculosidade}%): ${formatarMoeda(periculosidade)}`);
+            if (insalubridade) adicionais.push(`Insalubridade (${f.insalubridade}%): ${formatarMoeda(insalubridade)}`);
 
             return `
             <div class="item">
@@ -121,7 +145,9 @@ function renderizarFolha(ativos) {
                     <div>
                         <div class="nome">${f.nome}</div>
                         <div class="sub">Salário: ${formatarMoeda(salario)}${salario ? "" : " (não cadastrado)"}</div>
+                        ${adicionais.length ? `<div class="sub">${adicionais.join(" · ")}</div>` : ""}
                     </div>
+                    <span class="selo selo-andamento">${formatarMoeda(remuneracao)}</span>
                 </div>
                 <div class="sub" style="margin-top:8px;">
                     FGTS (8%): ${formatarMoeda(fgts)} · INSS retido do funcionário: ${formatarMoeda(inss)}
@@ -129,9 +155,9 @@ function renderizarFolha(ativos) {
             </div>`;
         }).join("");
 
-    const inssPatronal = totalSalarios * INSS_PATRONAL_ALIQUOTA;
+    const inssPatronal = totalRemuneracao * INSS_PATRONAL_ALIQUOTA;
 
-    totalFolhaEl.textContent = formatarMoeda(totalSalarios);
+    totalFolhaEl.textContent = formatarMoeda(totalRemuneracao);
     resumoFolhaEl.innerHTML =
         `${ativos.length} funcionário${ativos.length > 1 ? "s" : ""} · ` +
         `FGTS do mês: ${formatarMoeda(totalFgts)} · INSS retido: ${formatarMoeda(totalInss)}<br>` +
@@ -153,8 +179,7 @@ function decimoProporcional(funcionario, hoje) {
     if (hoje.getDate() >= 15) meses += 1;
     meses = Math.max(0, Math.min(12, meses));
 
-    const salario = funcionario.salario || 0;
-    const valor = (salario / 12) * meses;
+    const valor = (remuneracaoTotal(funcionario) / 12) * meses;
     return { meses, valor, fgts: valor * FGTS_PERCENTUAL };
 }
 
@@ -239,6 +264,7 @@ function preencherFormularioConfig() {
     inputAliquotaIcms.value = configGeral.aliquotaIcms || "";
     inputPresuncaoIrpj.value = configGeral.presuncaoIrpj ?? 32;
     inputPresuncaoCsll.value = configGeral.presuncaoCsll ?? 32;
+    inputSalarioMinimo.value = configGeral.salarioMinimo || "";
 
     const mesIso = new Date().toISOString().slice(0, 7);
     inputFaturamentoMes.value = faturamentoPorMes[mesIso] || "";
@@ -362,16 +388,16 @@ function gerarRelatorioPdf() {
     const t = calcularImpostosTrimestrais(mesIso);
 
     const ativos = funcionariosCache.filter((f) => f.status === "ativo");
-    const totalSalarios = ativos.reduce((soma, f) => soma + (f.salario || 0), 0);
+    const totalSalarios = ativos.reduce((soma, f) => soma + remuneracaoTotal(f), 0);
     const totalFgtsFolha = totalSalarios * FGTS_PERCENTUAL;
-    const totalInssRetido = ativos.reduce((soma, f) => soma + calcularInss(f.salario || 0), 0);
+    const totalInssRetido = ativos.reduce((soma, f) => soma + calcularInss(remuneracaoTotal(f)), 0);
     const inssPatronal = totalSalarios * INSS_PATRONAL_ALIQUOTA;
     const totalMesGeral = totalSalarios + totalFgtsFolha + totalInssRetido + inssPatronal + m.total;
 
     const linhasFolha = ativos.length
         ? ativos.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || "")).map((f) => {
-            const salario = f.salario || 0;
-            return `<tr><td>${f.nome}</td><td>${formatarMoeda(salario)}</td><td>${formatarMoeda(salario * FGTS_PERCENTUAL)}</td><td>${formatarMoeda(calcularInss(salario))}</td></tr>`;
+            const remuneracao = remuneracaoTotal(f);
+            return `<tr><td>${f.nome}</td><td>${formatarMoeda(remuneracao)}</td><td>${formatarMoeda(remuneracao * FGTS_PERCENTUAL)}</td><td>${formatarMoeda(calcularInss(remuneracao))}</td></tr>`;
         }).join("")
         : '<tr><td colspan="4">Nenhum funcionário ativo cadastrado.</td></tr>';
 
@@ -420,7 +446,7 @@ function gerarRelatorioPdf() {
 
   <h2>Total a pagar em ${nomeMes(mesIso)}</h2>
   <div class="resumo">
-    <div>Salários: ${formatarMoeda(totalSalarios)}</div>
+    <div>Salários + periculosidade/insalubridade: ${formatarMoeda(totalSalarios)}</div>
     <div>FGTS (8%): ${formatarMoeda(totalFgtsFolha)}</div>
     <div>INSS retido dos funcionários: ${formatarMoeda(totalInssRetido)}</div>
     <div>INSS patronal (20%): ${formatarMoeda(inssPatronal)}</div>
@@ -433,7 +459,7 @@ function gerarRelatorioPdf() {
 
   <h2>Folha — ${ativos.length} funcionário${ativos.length === 1 ? "" : "s"} ativo${ativos.length === 1 ? "" : "s"}</h2>
   <table>
-    <thead><tr><th>Funcionário</th><th>Salário</th><th>FGTS</th><th>INSS retido</th></tr></thead>
+    <thead><tr><th>Funcionário</th><th>Remuneração (c/ adicionais)</th><th>FGTS</th><th>INSS retido</th></tr></thead>
     <tbody>${linhasFolha}</tbody>
     <tfoot><tr><td><b>Total</b></td><td><b>${formatarMoeda(totalSalarios)}</b></td><td><b>${formatarMoeda(totalFgtsFolha)}</b></td><td><b>${formatarMoeda(totalInssRetido)}</b></td></tr></tfoot>
   </table>
@@ -479,6 +505,7 @@ document.getElementById("btnSalvarConfigFiscal").addEventListener("click", async
         aliquotaIcms: Number(inputAliquotaIcms.value) || 0,
         presuncaoIrpj: Number(inputPresuncaoIrpj.value) || 32,
         presuncaoCsll: Number(inputPresuncaoCsll.value) || 32,
+        salarioMinimo: Number(inputSalarioMinimo.value) || 0,
     }, "geral");
 });
 
@@ -533,13 +560,14 @@ observarColecao(COLECAO_CONFIG_FISCAL, (docs) => {
         aliquotaIcms: geral?.aliquotaIcms || 0,
         presuncaoIrpj: geral?.presuncaoIrpj ?? 32,
         presuncaoCsll: geral?.presuncaoCsll ?? 32,
+        salarioMinimo: geral?.salarioMinimo || 0,
     };
     faturamentoPorMes = {};
     docs.forEach((d) => {
         if (/^\d{4}-\d{2}$/.test(d.id)) faturamentoPorMes[d.id] = d.faturamentoServicos || 0;
     });
     preencherFormularioConfig();
-    renderizarImpostosEmpresa();
+    renderizarTudo();
 });
 
 })();

@@ -42,6 +42,13 @@ funcionarios/{funcionarioId}
   custoHora         number   (R$/hora — calculado a partir do salário, ou
                               digitado na mão para diarista/terceirizado sem
                               salário fixo; é o que o Financeiro usa)
+  periculosidade    number   (%, opcional — CLT art. 193, normalmente 30%
+                              sobre o próprio salário do funcionário)
+  insalubridade     number   (%, opcional — CLT art. 192: 10/20/40%, mas
+                              sobre o salário MÍNIMO NACIONAL, não sobre o
+                              salário do funcionário. Ambos entram na base
+                              de FGTS/INSS/13º em Obrigações — ver seção
+                              "obrigacoes (painel)" abaixo)
   beneficios
     valeTransporte  bool
     valeAlimentacao bool
@@ -249,16 +256,21 @@ A tela `pages/obrigacoes.html` calcula tudo na hora a partir de
 empresa: **Lucro Presumido** (confirmado pelo dono da empresa —
 se isso mudar um dia, os cálculos abaixo precisam ser revistos).
 
-- **Folha do mês**: por funcionário, `salario` (ou 0 se não cadastrado),
-  FGTS = `salario × 8%`, e INSS retido do funcionário pela tabela
-  progressiva em `FAIXAS_INSS` (js/modules/obrigacoes.js) — **essa
-  tabela é reajustada todo ano pelo governo, precisa atualizar o
-  arquivo quando isso acontecer**. Também soma o INSS patronal (CPP),
-  20% sobre a folha bruta — no Lucro Presumido isso é uma guia própria
-  (GPS/DCTFWeb), não vem embutido em nada.
+- **Folha do mês**: por funcionário, a base não é só `salario` — é a
+  **remuneração total** (`remuneracaoTotal()` em js/modules/obrigacoes.js):
+  `salario` + periculosidade (`salario × periculosidade%`) + insalubridade
+  (`configFiscal/geral.salarioMinimo × insalubridade%`). Os dois adicionais
+  têm natureza salarial (CLT), então entram na base de FGTS (8% sobre a
+  remuneração total), INSS retido (tabela progressiva em `FAIXAS_INSS`,
+  js/modules/obrigacoes.js — **essa tabela é reajustada todo ano pelo
+  governo, precisa atualizar o arquivo quando isso acontecer**) e do 13º.
+  Também soma o INSS patronal (CPP), 20% sobre a folha bruta (remuneração
+  total) — no Lucro Presumido isso é uma guia própria (GPS/DCTFWeb), não
+  vem embutido em nada.
 - **13º proporcional**: avos trabalhados no ano corrente (conta o mês
   atual se hoje já passou do dia 15, regra do "15 dias = 1 avo" da
-  CLT), aplicado sobre `salario`, mais FGTS sobre esse valor.
+  CLT), aplicado sobre a remuneração total (salário + periculosidade +
+  insalubridade), mais FGTS sobre esse valor.
 - **Férias**: período aquisitivo = 12 meses a partir de `ultimasFerias`
   (ou `dataAdmissao` se nunca tirou); período concessivo = os 12 meses
   seguintes. Só aparece na lista quem está no período concessivo com
@@ -293,6 +305,9 @@ configFiscal/geral
   aliquotaIcms      number (%)
   presuncaoIrpj     number (%, padrão 32 — só sobre a parte de serviço)
   presuncaoCsll     number (%, padrão 32 — só sobre a parte de serviço)
+  salarioMinimo     number (R$, salário mínimo nacional vigente — base da
+                            insalubridade dos funcionários; reajustado todo
+                            ano, igual a tabela do INSS)
 
 configFiscal/{AAAA-MM}
   faturamentoServicos  number (faturamento de serviço das Obras nesse mês,

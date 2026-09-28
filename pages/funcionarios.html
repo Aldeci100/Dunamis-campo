@@ -119,6 +119,26 @@
         na mão.
       </p>
 
+      <div class="linha-2">
+        <div>
+          <label>Periculosidade (%)</label>
+          <input type="number" id="funcPericulosidade" step="0.01" min="0" max="100" placeholder="Ex: 30">
+        </div>
+        <div>
+          <label>Insalubridade (%)</label>
+          <input type="number" id="funcInsalubridade" step="0.01" min="0" max="100" placeholder="Ex: 10, 20 ou 40">
+        </div>
+      </div>
+      <p class="aviso" style="text-align:left;margin-top:6px;">
+        Periculosidade: normalmente 30% sobre o salário-base (CLT art.
+        193). Insalubridade: 10% (mínimo), 20% (médio) ou 40% (máximo)
+        sobre o salário mínimo nacional, não sobre o salário do
+        funcionário (CLT art. 192) — configure o salário mínimo vigente
+        em Obrigações → Configurações fiscais. Deixe em branco se não
+        se aplica. Entra automaticamente no cálculo de FGTS, INSS e 13º
+        em Obrigações.
+      </p>
+
       <label style="margin-top:18px;">Benefícios</label>
       <div class="check">
         <input type="checkbox" id="funcValeTransporte">
@@ -189,6 +209,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/funcionarios.js?v=5"></script>
+<script src="../js/modules/funcionarios.js?v=6"></script>
 </body>
 </html>

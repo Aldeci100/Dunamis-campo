@@ -81,6 +81,8 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   faturamento** de cada NF emitida — essa data alimenta sozinha o cálculo
   de impostos do mês em Obrigações
 - **Funcionários** — cadastro, obra atual, direito a vale-transporte/alimentação,
+  **periculosidade e insalubridade (%, opcionais)** — entram automaticamente
+  no cálculo de FGTS, INSS e 13º em Obrigações, já que têm natureza salarial —
   espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos
   estão em cada obra, sempre com o total geral independente de filtro), busca
   por nome e filtro por obra e por status, e exportação da lista (nome/função/
@@ -109,12 +111,15 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   custo total por obra no mês e a margem/prejuízo contra o valor do
   contrato — *financeiro*
 - **Usuários** — libera o acesso de cada e-mail a um setor — *admin*
-- **Obrigações** — folha do mês (salário + FGTS 8% + INSS retido do
-  funcionário, tabela progressiva de referência, + INSS patronal 20% sobre
-  a folha), 13º salário proporcional (avos trabalhados no ano + FGTS sobre
-  ele) e alerta de férias vencidas ou perto de vencer (com base na data das
-  últimas férias, cadastrada em Funcionários, ou na admissão se nunca
-  tirou) — tudo calculado sozinho a partir dos funcionários ativos.
+- **Obrigações** — folha do mês (salário + periculosidade/insalubridade do
+  funcionário + FGTS 8% + INSS retido, tabela progressiva de referência, +
+  INSS patronal 20% sobre a folha), 13º salário proporcional (avos
+  trabalhados no ano, sobre salário + adicionais + FGTS sobre ele) e alerta
+  de férias vencidas ou perto de vencer (com base na data das últimas
+  férias, cadastrada em Funcionários, ou na admissão se nunca tirou) — tudo
+  calculado sozinho a partir dos funcionários ativos. Insalubridade usa
+  como base o salário mínimo nacional, configurável na própria tela
+  (Configurações fiscais → Salário mínimo).
   Impostos da empresa (regime **Lucro Presumido**): PIS (0,65%), COFINS
   (3%), ISS e ICMS calculados por mês sobre o faturamento (Notas Fiscais de
   Obras entram pela data de faturamento delas + vendas dos Navios, ambos

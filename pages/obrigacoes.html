@@ -71,6 +71,14 @@
       <label>% de presunção da CSLL sobre serviços</label>
       <input type="number" id="configPresuncaoCsll" step="0.01" min="0" max="100" placeholder="32">
 
+      <label>Salário mínimo nacional vigente (R$)</label>
+      <input type="number" id="configSalarioMinimo" step="0.01" min="0" placeholder="Ex: 1518.00">
+      <p class="aviso" style="text-align:left;margin-top:2px;">
+        Base de cálculo da insalubridade dos funcionários (não muda com
+        periculosidade, que usa o salário do próprio funcionário).
+        Reajustado todo ano — atualize aqui quando isso acontecer.
+      </p>
+
       <button type="button" class="btn-secundaria" id="btnSalvarConfigFiscal" style="margin-top:14px;">Salvar configurações</button>
     </div>
 
@@ -123,6 +131,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/obrigacoes.js?v=6"></script>
+<script src="../js/modules/obrigacoes.js?v=7"></script>
 </body>
 </html>
