@@ -275,6 +275,17 @@ configFiscal/{AAAA-MM}
                                 digitado à mão)
 ```
 
+**Relatório mensal (PDF)**: botão 🖨️ no fim da tela, com seletor de mês
+(`<input type="month">`). Reaproveita `calcularImpostosMensais(mesIso)` e
+`calcularImpostosTrimestrais(mesIso)` — as mesmas funções que alimentam a
+tela ao vivo, só que parametrizadas pelo mês escolhido em vez de "hoje",
+pra não duplicar a lógica de cálculo. Mesmo padrão dos outros relatórios
+do app (`window.open` + `document.write` + botão "Imprimir/Salvar como
+PDF", sem lib de PDF). Folha, 13º e férias no relatório sempre refletem o
+cadastro **atual** dos funcionários (o app não guarda histórico de
+salário), mesmo gerando relatório de um mês passado — isso é avisado no
+próprio relatório.
+
 ## usuarios
 Define o que cada pessoa pode acessar. Documento indexado pelo **e-mail
 em minúsculo** (não por uid), para o admin conseguir cadastrar o acesso

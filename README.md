@@ -112,7 +112,10 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   de 10% acima de R$60.000) e CSLL (9%) calculados por **trimestre**
   (apuração real do Lucro Presumido, não é mensal). Alíquotas de ISS/ICMS e
   % de presunção de IRPJ/CSLL são configuráveis na própria tela — confirme
-  com o contador antes de mudar os padrões — *rh*, *financeiro*
+  com o contador antes de mudar os padrões. Tem também um botão de
+  **relatório mensal em PDF** (🖨️, com seletor de mês) que junta folha,
+  FGTS, INSS, impostos do mês e do trimestre e férias vencidas num único
+  documento pra imprimir ou salvar — *rh*, *financeiro*
 
 ## Próximos passos (ver docs/MODELO-DE-DADOS.md)
 - Upload de foto/laudo em SST (ASO, ocorrências) — mesma ideia dos

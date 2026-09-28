@@ -95,6 +95,15 @@
     <div class="grande" id="totalImpostosTri" style="font-size:24px;">R$ 0,00</div>
     <div class="sub" id="detalheImpostosTri"></div>
   </div>
+
+  <label style="margin-top:24px;">Relatório mensal de impostos (PDF)</label>
+  <p class="aviso" style="text-align:left;margin-top:-4px;">
+    Junta folha, FGTS, INSS e os impostos da empresa do mês escolhido
+    num relatório pra imprimir ou salvar como PDF.
+  </p>
+  <label style="margin-top:10px;">Mês do relatório</label>
+  <input type="month" id="relatorioMes">
+  <button type="button" class="btn-primaria" id="btnGerarRelatorio" style="margin-top:14px;">🖨️ Gerar relatório PDF</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -104,6 +113,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/obrigacoes.js?v=3"></script>
+<script src="../js/modules/obrigacoes.js?v=4"></script>
 </body>
 </html>

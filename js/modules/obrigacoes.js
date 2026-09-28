@@ -24,6 +24,7 @@ const inputAliquotaIcms = document.getElementById("configAliquotaIcms");
 const inputPresuncaoIrpj = document.getElementById("configPresuncaoIrpj");
 const inputPresuncaoCsll = document.getElementById("configPresuncaoCsll");
 const inputFaturamentoMes = document.getElementById("faturamentoServicosMes");
+const inputRelatorioMes = document.getElementById("relatorioMes");
 const totalImpostosMesEl = document.getElementById("totalImpostosMes");
 const detalheImpostosMesEl = document.getElementById("detalheImpostosMes");
 const totalImpostosTriEl = document.getElementById("totalImpostosTri");
@@ -69,6 +70,12 @@ function formatarData(iso) {
     if (!iso) return "";
     const [ano, mes, dia] = iso.split("-");
     return `${dia}/${mes}/${ano}`;
+}
+
+function nomeMes(mesIso) {
+    const [ano, mes] = mesIso.split("-").map(Number);
+    const nomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    return `${nomes[mes - 1]} de ${ano}`;
 }
 
 function calcularInss(salario) {
@@ -242,82 +249,91 @@ function somaVendasNavioPorTipo(tipo, inicioIso, fimIsoExclusivo) {
         .reduce((soma, v) => soma + (Number(v.valorTotal) || 0), 0);
 }
 
-function limitesMes(hoje) {
-    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+function limitesMes(mesIso) {
+    const [ano, mes] = mesIso.split("-").map(Number);
+    const inicio = new Date(ano, mes - 1, 1);
+    const fim = new Date(ano, mes, 1);
     return { inicioIso: inicio.toISOString().slice(0, 10), fimIso: fim.toISOString().slice(0, 10) };
 }
 
-function limitesTrimestre(hoje) {
-    const trimestre = Math.floor(hoje.getMonth() / 3);
-    const inicio = new Date(hoje.getFullYear(), trimestre * 3, 1);
-    const fim = new Date(hoje.getFullYear(), trimestre * 3 + 3, 1);
+function limitesTrimestre(mesIso) {
+    const [ano, mes] = mesIso.split("-").map(Number);
+    const trimestre = Math.floor((mes - 1) / 3);
+    const inicio = new Date(ano, trimestre * 3, 1);
+    const fim = new Date(ano, trimestre * 3 + 3, 1);
     return {
         inicioIso: inicio.toISOString().slice(0, 10),
         fimIso: fim.toISOString().slice(0, 10),
         numero: trimestre + 1,
-        ano: hoje.getFullYear(),
+        ano,
         primeiroMesIndex: trimestre * 3,
     };
 }
 
-function renderizarImpostosEmpresa() {
-    const hoje = new Date();
-    const mesIso = hoje.toISOString().slice(0, 7);
+// ---- mensal: PIS, COFINS, ISS, ICMS, sobre o faturamento do mês ----
+function calcularImpostosMensais(mesIso) {
+    const { inicioIso, fimIso } = limitesMes(mesIso);
+    const servicosObras = faturamentoPorMes[mesIso] || 0;
+    const servicosNavios = somaVendasNavioPorTipo("servico", inicioIso, fimIso);
+    const mercadorias = somaVendasNavioPorTipo("mercadoria", inicioIso, fimIso);
+    const servicos = servicosObras + servicosNavios;
+    const faturamento = servicos + mercadorias;
 
-    // ---- mensal: PIS, COFINS, ISS, ICMS ----
-    const { inicioIso: inicioMes, fimIso: fimMes } = limitesMes(hoje);
-    const servicosObrasMes = faturamentoPorMes[mesIso] || 0;
-    const servicosNaviosMes = somaVendasNavioPorTipo("servico", inicioMes, fimMes);
-    const mercadoriasMes = somaVendasNavioPorTipo("mercadoria", inicioMes, fimMes);
-    const servicosMes = servicosObrasMes + servicosNaviosMes;
-    const faturamentoMes = servicosMes + mercadoriasMes;
+    const pis = faturamento * PIS_ALIQUOTA;
+    const cofins = faturamento * COFINS_ALIQUOTA;
+    const iss = servicos * (configGeral.aliquotaIss / 100);
+    const icms = mercadorias * (configGeral.aliquotaIcms / 100);
 
-    const pis = faturamentoMes * PIS_ALIQUOTA;
-    const cofins = faturamentoMes * COFINS_ALIQUOTA;
-    const iss = servicosMes * (configGeral.aliquotaIss / 100);
-    const icms = mercadoriasMes * (configGeral.aliquotaIcms / 100);
-    const totalMes = pis + cofins + iss + icms;
+    return { mesIso, servicos, mercadorias, faturamento, pis, cofins, iss, icms, total: pis + cofins + iss + icms };
+}
 
-    totalImpostosMesEl.textContent = formatarMoeda(totalMes);
-    detalheImpostosMesEl.innerHTML =
-        `Faturamento do mês: ${formatarMoeda(faturamentoMes)} ` +
-        `(serviços ${formatarMoeda(servicosMes)} + mercadorias ${formatarMoeda(mercadoriasMes)})<br>` +
-        `PIS (0,65%): ${formatarMoeda(pis)} · COFINS (3%): ${formatarMoeda(cofins)}<br>` +
-        `ISS (${configGeral.aliquotaIss || 0}%): ${formatarMoeda(iss)}` +
-        `${configGeral.aliquotaIss ? "" : " — configure a alíquota do seu município acima"}` +
-        ` · ICMS (${configGeral.aliquotaIcms || 0}%): ${formatarMoeda(icms)}` +
-        `${mercadoriasMes && !configGeral.aliquotaIcms ? " — configure a alíquota acima" : ""}`;
+// ---- trimestral: IRPJ, CSLL (apuração do Lucro Presumido é por
+// trimestre, não mensal — por isso soma os 3 meses do trimestre) ----
+function calcularImpostosTrimestrais(mesIso) {
+    const { inicioIso, fimIso, numero, ano, primeiroMesIndex } = limitesTrimestre(mesIso);
 
-    // ---- trimestral: IRPJ, CSLL (apuração do Lucro Presumido é por
-    // trimestre, não mensal — por isso soma os 3 meses do trimestre) ----
-    const { inicioIso: inicioTri, fimIso: fimTri, numero: numeroTri, ano: anoTri, primeiroMesIndex } = limitesTrimestre(hoje);
-
-    let servicosObrasTri = 0;
+    let servicosObras = 0;
     for (let m = 0; m < 3; m++) {
-        const chave = new Date(hoje.getFullYear(), primeiroMesIndex + m, 1).toISOString().slice(0, 7);
-        servicosObrasTri += faturamentoPorMes[chave] || 0;
+        const chave = new Date(ano, primeiroMesIndex + m, 1).toISOString().slice(0, 7);
+        servicosObras += faturamentoPorMes[chave] || 0;
     }
-    const servicosNaviosTri = somaVendasNavioPorTipo("servico", inicioTri, fimTri);
-    const mercadoriasTri = somaVendasNavioPorTipo("mercadoria", inicioTri, fimTri);
-    const servicosTri = servicosObrasTri + servicosNaviosTri;
+    const servicosNavios = somaVendasNavioPorTipo("servico", inicioIso, fimIso);
+    const mercadorias = somaVendasNavioPorTipo("mercadoria", inicioIso, fimIso);
+    const servicos = servicosObras + servicosNavios;
 
     const presuncaoIrpj = (configGeral.presuncaoIrpj ?? 32) / 100;
     const presuncaoCsll = (configGeral.presuncaoCsll ?? 32) / 100;
 
-    const baseIrpj = servicosTri * presuncaoIrpj + mercadoriasTri * PRESUNCAO_IRPJ_MERCADORIA;
-    const baseCsll = servicosTri * presuncaoCsll + mercadoriasTri * PRESUNCAO_CSLL_MERCADORIA;
+    const baseIrpj = servicos * presuncaoIrpj + mercadorias * PRESUNCAO_IRPJ_MERCADORIA;
+    const baseCsll = servicos * presuncaoCsll + mercadorias * PRESUNCAO_CSLL_MERCADORIA;
 
     const irpjAdicional = Math.max(0, baseIrpj - IRPJ_ADICIONAL_LIMITE_TRIMESTRE) * IRPJ_ADICIONAL_ALIQUOTA;
     const irpj = baseIrpj * IRPJ_ALIQUOTA + irpjAdicional;
     const csll = baseCsll * CSLL_ALIQUOTA;
-    const totalTri = irpj + csll;
 
-    totalImpostosTriEl.textContent = formatarMoeda(totalTri);
+    return { numero, ano, servicos, mercadorias, baseIrpj, baseCsll, irpj, irpjAdicional, csll, total: irpj + csll };
+}
+
+function renderizarImpostosEmpresa() {
+    const mesIso = new Date().toISOString().slice(0, 7);
+    const m = calcularImpostosMensais(mesIso);
+    const t = calcularImpostosTrimestrais(mesIso);
+
+    totalImpostosMesEl.textContent = formatarMoeda(m.total);
+    detalheImpostosMesEl.innerHTML =
+        `Faturamento do mês: ${formatarMoeda(m.faturamento)} ` +
+        `(serviços ${formatarMoeda(m.servicos)} + mercadorias ${formatarMoeda(m.mercadorias)})<br>` +
+        `PIS (0,65%): ${formatarMoeda(m.pis)} · COFINS (3%): ${formatarMoeda(m.cofins)}<br>` +
+        `ISS (${configGeral.aliquotaIss || 0}%): ${formatarMoeda(m.iss)}` +
+        `${configGeral.aliquotaIss ? "" : " — configure a alíquota do seu município acima"}` +
+        ` · ICMS (${configGeral.aliquotaIcms || 0}%): ${formatarMoeda(m.icms)}` +
+        `${m.mercadorias && !configGeral.aliquotaIcms ? " — configure a alíquota acima" : ""}`;
+
+    totalImpostosTriEl.textContent = formatarMoeda(t.total);
     detalheImpostosTriEl.innerHTML =
-        `${numeroTri}º trimestre de ${anoTri} · Faturamento do trimestre: ${formatarMoeda(servicosTri + mercadoriasTri)}<br>` +
-        `IRPJ (15%${irpjAdicional ? " + adicional de 10% sobre o excedente de R$60.000" : ""}): ${formatarMoeda(irpj)} · ` +
-        `CSLL (9%): ${formatarMoeda(csll)}`;
+        `${t.numero}º trimestre de ${t.ano} · Faturamento do trimestre: ${formatarMoeda(t.servicos + t.mercadorias)}<br>` +
+        `IRPJ (15%${t.irpjAdicional ? " + adicional de 10% sobre o excedente de R$60.000" : ""}): ${formatarMoeda(t.irpj)} · ` +
+        `CSLL (9%): ${formatarMoeda(t.csll)}`;
 }
 
 function renderizarTudo() {
@@ -329,6 +345,123 @@ function renderizarTudo() {
     renderizar13(ativos, hoje);
     renderizarFerias(ativos, hoje);
     renderizarImpostosEmpresa();
+}
+
+function gerarRelatorioPdf() {
+    const mesIso = inputRelatorioMes.value || new Date().toISOString().slice(0, 7);
+    const m = calcularImpostosMensais(mesIso);
+    const t = calcularImpostosTrimestrais(mesIso);
+
+    const ativos = funcionariosCache.filter((f) => f.status === "ativo");
+    const totalSalarios = ativos.reduce((soma, f) => soma + (f.salario || 0), 0);
+    const totalFgtsFolha = totalSalarios * FGTS_PERCENTUAL;
+    const totalInssRetido = ativos.reduce((soma, f) => soma + calcularInss(f.salario || 0), 0);
+    const inssPatronal = totalSalarios * INSS_PATRONAL_ALIQUOTA;
+    const totalMesGeral = totalSalarios + totalFgtsFolha + totalInssRetido + inssPatronal + m.total;
+
+    const linhasFolha = ativos.length
+        ? ativos.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || "")).map((f) => {
+            const salario = f.salario || 0;
+            return `<tr><td>${f.nome}</td><td>${formatarMoeda(salario)}</td><td>${formatarMoeda(salario * FGTS_PERCENTUAL)}</td><td>${formatarMoeda(calcularInss(salario))}</td></tr>`;
+        }).join("")
+        : '<tr><td colspan="4">Nenhum funcionário ativo cadastrado.</td></tr>';
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const alertasFerias = ativos
+        .map((f) => ({ f, situacao: situacaoFerias(f, hoje) }))
+        .filter((x) => x.situacao)
+        .sort((a, b) => (a.f.nome || "").localeCompare(b.f.nome || ""));
+    const linhasFerias = alertasFerias.length
+        ? alertasFerias.map(({ f, situacao }) => `<tr><td>${f.nome}</td><td>${situacao.texto}</td></tr>`).join("")
+        : '<tr><td colspan="2">Nenhuma vencida ou perto de vencer no momento.</td></tr>';
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Obrigações — ${nomeMes(mesIso)}</title>
+<style>
+  body { font-family: system-ui, Arial, sans-serif; color: #111; padding: 32px; max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  h2 { font-size: 16px; margin-top: 28px; border-bottom: 2px solid #333; padding-bottom: 4px; }
+  .sub { color: #555; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ddd; }
+  th { background: #f2f2f2; }
+  .resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-top: 10px; font-size: 14px; }
+  .resumo b { font-size: 16px; }
+  .aviso-box { background: #fff7e6; border: 1px solid #f5a623; border-radius: 8px; padding: 12px; font-size: 13px; margin-top: 16px; line-height: 1.5; }
+  .rodape { margin-top: 36px; font-size: 12px; color: #888; }
+  .btn-imprimir { margin-top: 20px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+  @media print { .btn-imprimir { display: none; } }
+</style>
+</head>
+<body>
+  <h1>Dunamis Services — Relatório de Obrigações</h1>
+  <div class="sub">Referência: ${nomeMes(mesIso)} · Gerado em ${new Date().toLocaleString("pt-BR")}</div>
+
+  <div class="aviso-box">
+    ⚠️ Valores estimados (regime Lucro Presumido). Folha, 13º e férias
+    refletem o cadastro <b>atual</b> dos funcionários, não necessariamente
+    o que valia num mês passado. IRPJ/CSLL são de apuração trimestral —
+    não pague junto com os impostos mensais. Confirme sempre com o
+    contador antes de pagar qualquer guia.
+  </div>
+
+  <h2>Total a pagar em ${nomeMes(mesIso)}</h2>
+  <div class="resumo">
+    <div>Salários: ${formatarMoeda(totalSalarios)}</div>
+    <div>FGTS (8%): ${formatarMoeda(totalFgtsFolha)}</div>
+    <div>INSS retido dos funcionários: ${formatarMoeda(totalInssRetido)}</div>
+    <div>INSS patronal (20%): ${formatarMoeda(inssPatronal)}</div>
+    <div>PIS (0,65%): ${formatarMoeda(m.pis)}</div>
+    <div>COFINS (3%): ${formatarMoeda(m.cofins)}</div>
+    <div>ISS (${configGeral.aliquotaIss || 0}%): ${formatarMoeda(m.iss)}</div>
+    <div>ICMS (${configGeral.aliquotaIcms || 0}%): ${formatarMoeda(m.icms)}</div>
+    <div style="grid-column:1/-1;"><b>Total do mês (sem IRPJ/CSLL): ${formatarMoeda(totalMesGeral)}</b></div>
+  </div>
+
+  <h2>Folha — ${ativos.length} funcionário${ativos.length === 1 ? "" : "s"} ativo${ativos.length === 1 ? "" : "s"}</h2>
+  <table>
+    <thead><tr><th>Funcionário</th><th>Salário</th><th>FGTS</th><th>INSS retido</th></tr></thead>
+    <tbody>${linhasFolha}</tbody>
+    <tfoot><tr><td><b>Total</b></td><td><b>${formatarMoeda(totalSalarios)}</b></td><td><b>${formatarMoeda(totalFgtsFolha)}</b></td><td><b>${formatarMoeda(totalInssRetido)}</b></td></tr></tfoot>
+  </table>
+
+  <h2>Faturamento usado no cálculo (${nomeMes(mesIso)})</h2>
+  <div class="resumo">
+    <div>Serviços (Obras + Navios): ${formatarMoeda(m.servicos)}</div>
+    <div>Mercadorias (Navios): ${formatarMoeda(m.mercadorias)}</div>
+  </div>
+
+  <h2>IRPJ + CSLL — ${t.numero}º trimestre de ${t.ano} (apuração trimestral)</h2>
+  <div class="resumo">
+    <div>Faturamento do trimestre: ${formatarMoeda(t.servicos + t.mercadorias)}</div>
+    <div>Base presumida IRPJ: ${formatarMoeda(t.baseIrpj)}</div>
+    <div>IRPJ (15%${t.irpjAdicional ? " + adicional" : ""}): ${formatarMoeda(t.irpj)}</div>
+    <div>CSLL (9%): ${formatarMoeda(t.csll)}</div>
+    <div style="grid-column:1/-1;"><b>Total do trimestre: ${formatarMoeda(t.total)}</b> — pague só quando o trimestre fechar, não neste mês.</div>
+  </div>
+
+  <h2>Férias vencidas ou perto de vencer (situação atual)</h2>
+  <table>
+    <thead><tr><th>Funcionário</th><th>Situação</th></tr></thead>
+    <tbody>${linhasFerias}</tbody>
+  </table>
+
+  <button class="btn-imprimir" onclick="window.print()">Imprimir / Salvar como PDF</button>
+  <div class="rodape">Dunamis Services — relatório gerado automaticamente a partir dos dados do app. Não substitui o contador.</div>
+</body>
+</html>`;
+
+    const janela = window.open("", "_blank");
+    if (!janela) {
+        alert("Não foi possível abrir o relatório. Verifique se o navegador bloqueou o pop-up.");
+        return;
+    }
+    janela.document.write(html);
+    janela.document.close();
 }
 
 document.getElementById("btnSalvarConfigFiscal").addEventListener("click", async () => {
@@ -346,6 +479,9 @@ document.getElementById("btnSalvarFaturamento").addEventListener("click", async 
         faturamentoServicos: Number(inputFaturamentoMes.value) || 0,
     }, mesIso);
 });
+
+inputRelatorioMes.value = new Date().toISOString().slice(0, 7);
+document.getElementById("btnGerarRelatorio").addEventListener("click", gerarRelatorioPdf);
 
 observarColecao("funcionarios", (l) => {
     funcionariosCache = l;
