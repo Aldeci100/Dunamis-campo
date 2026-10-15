@@ -250,17 +250,21 @@ o mês filtrado — comparar o valor total do contrato com o custo de um
 mês só daria um número errado numa obra de vários meses).
 
 **Folha do mês (PDF)**: botão 🧾 no topo da tela, gera a folha de
-pagamento detalhada (por funcionário: obra, salário, remuneração total,
-FGTS, INSS retido) de todos os `funcionarios` com `status: "ativo"`,
-pro mês selecionado no filtro. Reimplementa aqui as mesmas funções de
-`js/modules/obrigacoes.js` (`calcularInss`, `remuneracaoTotal` —
-periculosidade sobre o salário, insalubridade sobre
-`configFiscal/geral.salarioMinimo`) e também soma o INSS patronal —
-duplicado em vez de compartilhado porque cada módulo é uma IIFE
-isolada (mesmo padrão de `TIPOS_FIXOS`/`JORNADA_MENSAL_HORAS`,
-repetidos em obras.js/financeiro.js/funcionarios.js). Se a tabela do
-INSS ou a fórmula de periculosidade/insalubridade mudar, atualizar os
-dois arquivos.
+pagamento detalhada de todos os `funcionarios` com `status: "ativo"`,
+pro mês selecionado no filtro. Separa em dois blocos claros: **Pagamento
+aos funcionários** (bruto − INSS retido = líquido, o que efetivamente
+vai pro bolso de cada um) e **Impostos e encargos** (INSS retido + FGTS
++ INSS patronal — o que é recolhido/pago pela empresa, não entra no
+líquido do funcionário). A tabela por funcionário mostra obra, bruto,
+INSS retido, líquido a pagar e FGTS. Reimplementa aqui as mesmas
+funções de `js/modules/obrigacoes.js` (`calcularInss`, `remuneracaoTotal`
+— periculosidade sobre o salário, insalubridade sobre
+`configFiscal/geral.salarioMinimo`) — duplicado em vez de compartilhado
+porque cada módulo é uma IIFE isolada (mesmo padrão de
+`TIPOS_FIXOS`/`JORNADA_MENSAL_HORAS`, repetidos em
+obras.js/financeiro.js/funcionarios.js). Se a tabela do INSS ou a
+fórmula de periculosidade/insalubridade mudar, atualizar os dois
+arquivos.
 
 ## obrigacoes (painel)
 A tela `pages/obrigacoes.html` calcula tudo na hora a partir de
@@ -279,7 +283,10 @@ se isso mudar um dia, os cálculos abaixo precisam ser revistos).
   governo, precisa atualizar o arquivo quando isso acontecer**) e do 13º.
   Também soma o INSS patronal (CPP), 20% sobre a folha bruta (remuneração
   total) — no Lucro Presumido isso é uma guia própria (GPS/DCTFWeb), não
-  vem embutido em nada.
+  vem embutido em nada. A tela (e o relatório PDF) mostra isso separado
+  em dois blocos: **pagamento** (líquido = bruto − INSS retido, o que o
+  funcionário recebe) e **impostos/encargos** (INSS retido + FGTS + INSS
+  patronal, o que é recolhido/pago pela empresa).
 - **13º proporcional**: avos trabalhados no ano corrente (conta o mês
   atual se hoje já passou do dia 15, regra do "15 dias = 1 avo" da
   CLT), aplicado sobre a remuneração total (salário + periculosidade +

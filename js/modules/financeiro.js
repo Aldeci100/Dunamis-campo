@@ -328,14 +328,15 @@ function gerarFolhaPdf() {
     const mesIso = filtroMes.value || new Date().toISOString().slice(0, 7);
     const ativos = funcionariosCache.filter((f) => f.status === "ativo");
 
-    let totalRemuneracao = 0, totalFgts = 0, totalInss = 0;
+    let totalBruto = 0, totalFgts = 0, totalInss = 0;
 
     const linhas = ativos.length
         ? ativos.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || "")).map((f) => {
-            const remuneracao = remuneracaoTotal(f);
-            const fgts = remuneracao * FGTS_PERCENTUAL;
-            const inss = calcularInss(remuneracao);
-            totalRemuneracao += remuneracao;
+            const bruto = remuneracaoTotal(f);
+            const fgts = bruto * FGTS_PERCENTUAL;
+            const inss = calcularInss(bruto);
+            const liquido = bruto - inss;
+            totalBruto += bruto;
             totalFgts += fgts;
             totalInss += inss;
 
@@ -346,15 +347,17 @@ function gerarFolhaPdf() {
             return `<tr>
                 <td>${f.nome}${adicionais.length ? `<br><span style="color:#888;font-size:12px;">${adicionais.join(" · ")}</span>` : ""}</td>
                 <td>${nomeObraDoFuncionario(f)}</td>
-                <td>${formatarMoeda(f.salario || 0)}</td>
-                <td>${formatarMoeda(remuneracao)}</td>
-                <td>${formatarMoeda(fgts)}</td>
+                <td>${formatarMoeda(bruto)}</td>
                 <td>${formatarMoeda(inss)}</td>
+                <td><b>${formatarMoeda(liquido)}</b></td>
+                <td>${formatarMoeda(fgts)}</td>
             </tr>`;
         }).join("")
         : '<tr><td colspan="6">Nenhum funcionário ativo cadastrado.</td></tr>';
 
-    const inssPatronal = totalRemuneracao * INSS_PATRONAL_ALIQUOTA;
+    const totalLiquido = totalBruto - totalInss;
+    const inssPatronal = totalBruto * INSS_PATRONAL_ALIQUOTA;
+    const totalImpostos = totalInss + totalFgts + inssPatronal;
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -371,6 +374,7 @@ function gerarFolhaPdf() {
   th { background: #f2f2f2; }
   .resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-top: 10px; font-size: 14px; }
   .resumo b { font-size: 16px; }
+  .bloco { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
   .aviso-box { background: #fff7e6; border: 1px solid #f5a623; border-radius: 8px; padding: 12px; font-size: 13px; margin-top: 16px; line-height: 1.5; }
   .rodape { margin-top: 36px; font-size: 12px; color: #888; }
   .btn-imprimir { margin-top: 20px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
@@ -388,21 +392,35 @@ function gerarFolhaPdf() {
     folha oficial.
   </div>
 
-  <h2>Resumo</h2>
-  <div class="resumo">
-    <div>Funcionários ativos: ${ativos.length}</div>
-    <div>Total da folha (salário + adicionais): ${formatarMoeda(totalRemuneracao)}</div>
-    <div>FGTS (8%): ${formatarMoeda(totalFgts)}</div>
-    <div>INSS retido dos funcionários: ${formatarMoeda(totalInss)}</div>
-    <div>INSS patronal (20%): ${formatarMoeda(inssPatronal)}</div>
-    <div style="grid-column:1/-1;"><b>Total da folha + encargos: ${formatarMoeda(totalRemuneracao + totalFgts + totalInss + inssPatronal)}</b></div>
+  <h2>Pagamento aos funcionários</h2>
+  <div class="bloco">
+    <div class="resumo">
+      <div>Funcionários ativos: ${ativos.length}</div>
+      <div>Total bruto (salário + adicionais): ${formatarMoeda(totalBruto)}</div>
+      <div>(−) INSS retido dos funcionários: ${formatarMoeda(totalInss)}</div>
+      <div style="grid-column:1/-1;"><b>Líquido a pagar aos funcionários: ${formatarMoeda(totalLiquido)}</b></div>
+    </div>
+  </div>
+
+  <h2>Impostos e encargos (obrigações da empresa)</h2>
+  <div class="bloco">
+    <div class="resumo">
+      <div>INSS retido (recolhido ao INSS em nome do funcionário): ${formatarMoeda(totalInss)}</div>
+      <div>FGTS (8%): ${formatarMoeda(totalFgts)}</div>
+      <div>INSS patronal (20%): ${formatarMoeda(inssPatronal)}</div>
+      <div style="grid-column:1/-1;"><b>Total de impostos/encargos: ${formatarMoeda(totalImpostos)}</b></div>
+    </div>
+  </div>
+
+  <div class="resumo" style="margin-top:14px;">
+    <div style="grid-column:1/-1;"><b>Total geral (líquido + impostos): ${formatarMoeda(totalLiquido + totalImpostos)}</b></div>
   </div>
 
   <h2>Detalhamento por funcionário</h2>
   <table>
-    <thead><tr><th>Funcionário</th><th>Obra</th><th>Salário</th><th>Remuneração total</th><th>FGTS</th><th>INSS retido</th></tr></thead>
+    <thead><tr><th>Funcionário</th><th>Obra</th><th>Bruto</th><th>INSS retido</th><th>Líquido a pagar</th><th>FGTS</th></tr></thead>
     <tbody>${linhas}</tbody>
-    <tfoot><tr><td colspan="3"><b>Total</b></td><td><b>${formatarMoeda(totalRemuneracao)}</b></td><td><b>${formatarMoeda(totalFgts)}</b></td><td><b>${formatarMoeda(totalInss)}</b></td></tr></tfoot>
+    <tfoot><tr><td colspan="2"><b>Total</b></td><td><b>${formatarMoeda(totalBruto)}</b></td><td><b>${formatarMoeda(totalInss)}</b></td><td><b>${formatarMoeda(totalLiquido)}</b></td><td><b>${formatarMoeda(totalFgts)}</b></td></tr></tfoot>
   </table>
 
   <button class="btn-imprimir" onclick="window.print()">Imprimir / Salvar como PDF</button>

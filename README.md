@@ -110,10 +110,11 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   regra do Relatório de Obras) cruzada com as Despesas lançadas, mostrando o
   custo total por obra no mês e a margem/prejuízo contra o valor do
   contrato. Botão 🧾 **Gerar folha do mês (PDF)** monta a folha de pagamento
-  detalhada (salário, periculosidade/insalubridade, remuneração total,
-  FGTS, INSS retido e patronal) de todos os funcionários ativos, por
-  funcionário e com a obra de cada um — pro mês selecionado no filtro
-  acima — *financeiro*
+  detalhada de todos os funcionários ativos, separando claramente **o que
+  vai pro bolso do funcionário** (líquido = bruto − INSS retido) do **que é
+  imposto/encargo** (INSS retido + FGTS + INSS patronal) — por funcionário
+  e com a obra de cada um, pro mês selecionado no filtro acima. Mesma
+  separação no relatório de Obrigações — *financeiro*
 - **Usuários** — libera o acesso de cada e-mail a um setor — *admin*
 - **Obrigações** — folha do mês (salário + periculosidade/insalubridade do
   funcionário + FGTS 8% + INSS retido, tabela progressiva de referência, +

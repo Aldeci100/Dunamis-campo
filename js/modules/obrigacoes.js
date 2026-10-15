@@ -119,7 +119,7 @@ function renderizarFolha(ativos) {
         return;
     }
 
-    let totalRemuneracao = 0, totalFgts = 0, totalInss = 0;
+    let totalBruto = 0, totalFgts = 0, totalInss = 0;
 
     listaFolhaEl.innerHTML = ativos
         .slice()
@@ -128,10 +128,11 @@ function renderizarFolha(ativos) {
             const salario = f.salario || 0;
             const periculosidade = valorPericulosidade(f);
             const insalubridade = valorInsalubridade(f);
-            const remuneracao = remuneracaoTotal(f);
-            const fgts = remuneracao * FGTS_PERCENTUAL;
-            const inss = calcularInss(remuneracao);
-            totalRemuneracao += remuneracao;
+            const bruto = remuneracaoTotal(f);
+            const fgts = bruto * FGTS_PERCENTUAL;
+            const inss = calcularInss(bruto);
+            const liquido = bruto - inss;
+            totalBruto += bruto;
             totalFgts += fgts;
             totalInss += inss;
 
@@ -147,21 +148,24 @@ function renderizarFolha(ativos) {
                         <div class="sub">Salário: ${formatarMoeda(salario)}${salario ? "" : " (não cadastrado)"}</div>
                         ${adicionais.length ? `<div class="sub">${adicionais.join(" · ")}</div>` : ""}
                     </div>
-                    <span class="selo selo-andamento">${formatarMoeda(remuneracao)}</span>
+                    <span class="selo selo-andamento">${formatarMoeda(bruto)}</span>
                 </div>
                 <div class="sub" style="margin-top:8px;">
-                    FGTS (8%): ${formatarMoeda(fgts)} · INSS retido do funcionário: ${formatarMoeda(inss)}
+                    Impostos — FGTS (8%): ${formatarMoeda(fgts)} · INSS retido: ${formatarMoeda(inss)}
                 </div>
+                <div class="sub" style="margin-top:4px;"><b>Pagamento (líquido) ao funcionário: ${formatarMoeda(liquido)}</b></div>
             </div>`;
         }).join("");
 
-    const inssPatronal = totalRemuneracao * INSS_PATRONAL_ALIQUOTA;
+    const inssPatronal = totalBruto * INSS_PATRONAL_ALIQUOTA;
+    const totalLiquido = totalBruto - totalInss;
+    const totalImpostos = totalInss + totalFgts + inssPatronal;
 
-    totalFolhaEl.textContent = formatarMoeda(totalRemuneracao);
+    totalFolhaEl.textContent = formatarMoeda(totalBruto);
     resumoFolhaEl.innerHTML =
-        `${ativos.length} funcionário${ativos.length > 1 ? "s" : ""} · ` +
-        `FGTS do mês: ${formatarMoeda(totalFgts)} · INSS retido: ${formatarMoeda(totalInss)}<br>` +
-        `INSS patronal (20% sobre a folha, obrigação separada da empresa): ${formatarMoeda(inssPatronal)}`;
+        `${ativos.length} funcionário${ativos.length > 1 ? "s" : ""} · total bruto: ${formatarMoeda(totalBruto)}<br>` +
+        `<b>Pagamento (líquido) aos funcionários: ${formatarMoeda(totalLiquido)}</b><br>` +
+        `Impostos/encargos (INSS retido + FGTS + INSS patronal de ${formatarMoeda(inssPatronal)}): ${formatarMoeda(totalImpostos)}`;
 }
 
 function decimoProporcional(funcionario, hoje) {
@@ -388,18 +392,21 @@ function gerarRelatorioPdf() {
     const t = calcularImpostosTrimestrais(mesIso);
 
     const ativos = funcionariosCache.filter((f) => f.status === "ativo");
-    const totalSalarios = ativos.reduce((soma, f) => soma + remuneracaoTotal(f), 0);
-    const totalFgtsFolha = totalSalarios * FGTS_PERCENTUAL;
+    const totalBruto = ativos.reduce((soma, f) => soma + remuneracaoTotal(f), 0);
+    const totalFgtsFolha = totalBruto * FGTS_PERCENTUAL;
     const totalInssRetido = ativos.reduce((soma, f) => soma + calcularInss(remuneracaoTotal(f)), 0);
-    const inssPatronal = totalSalarios * INSS_PATRONAL_ALIQUOTA;
-    const totalMesGeral = totalSalarios + totalFgtsFolha + totalInssRetido + inssPatronal + m.total;
+    const inssPatronal = totalBruto * INSS_PATRONAL_ALIQUOTA;
+    const totalLiquidoFolha = totalBruto - totalInssRetido;
+    const totalImpostosFolha = totalInssRetido + totalFgtsFolha + inssPatronal;
+    const totalMesGeral = totalLiquidoFolha + totalImpostosFolha + m.total;
 
     const linhasFolha = ativos.length
         ? ativos.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || "")).map((f) => {
-            const remuneracao = remuneracaoTotal(f);
-            return `<tr><td>${f.nome}</td><td>${formatarMoeda(remuneracao)}</td><td>${formatarMoeda(remuneracao * FGTS_PERCENTUAL)}</td><td>${formatarMoeda(calcularInss(remuneracao))}</td></tr>`;
+            const bruto = remuneracaoTotal(f);
+            const inss = calcularInss(bruto);
+            return `<tr><td>${f.nome}</td><td>${formatarMoeda(bruto)}</td><td>${formatarMoeda(inss)}</td><td><b>${formatarMoeda(bruto - inss)}</b></td><td>${formatarMoeda(bruto * FGTS_PERCENTUAL)}</td></tr>`;
         }).join("")
-        : '<tr><td colspan="4">Nenhum funcionário ativo cadastrado.</td></tr>';
+        : '<tr><td colspan="5">Nenhum funcionário ativo cadastrado.</td></tr>';
 
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -426,6 +433,7 @@ function gerarRelatorioPdf() {
   th { background: #f2f2f2; }
   .resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-top: 10px; font-size: 14px; }
   .resumo b { font-size: 16px; }
+  .bloco { border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
   .aviso-box { background: #fff7e6; border: 1px solid #f5a623; border-radius: 8px; padding: 12px; font-size: 13px; margin-top: 16px; line-height: 1.5; }
   .rodape { margin-top: 36px; font-size: 12px; color: #888; }
   .btn-imprimir { margin-top: 20px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
@@ -444,24 +452,46 @@ function gerarRelatorioPdf() {
     contador antes de pagar qualquer guia.
   </div>
 
-  <h2>Total a pagar em ${nomeMes(mesIso)}</h2>
-  <div class="resumo">
-    <div>Salários + periculosidade/insalubridade: ${formatarMoeda(totalSalarios)}</div>
-    <div>FGTS (8%): ${formatarMoeda(totalFgtsFolha)}</div>
-    <div>INSS retido dos funcionários: ${formatarMoeda(totalInssRetido)}</div>
-    <div>INSS patronal (20%): ${formatarMoeda(inssPatronal)}</div>
-    <div>PIS (0,65%): ${formatarMoeda(m.pis)}</div>
-    <div>COFINS (3%): ${formatarMoeda(m.cofins)}</div>
-    <div>ISS (${configGeral.aliquotaIss || 0}%): ${formatarMoeda(m.iss)}</div>
-    <div>ICMS (${configGeral.aliquotaIcms || 0}%): ${formatarMoeda(m.icms)}</div>
-    <div style="grid-column:1/-1;"><b>Total do mês (sem IRPJ/CSLL): ${formatarMoeda(totalMesGeral)}</b></div>
+  <h2>Pagamento aos funcionários</h2>
+  <div class="bloco">
+    <div class="resumo">
+      <div>Funcionários ativos: ${ativos.length}</div>
+      <div>Total bruto (salário + adicionais): ${formatarMoeda(totalBruto)}</div>
+      <div>(−) INSS retido dos funcionários: ${formatarMoeda(totalInssRetido)}</div>
+      <div style="grid-column:1/-1;"><b>Líquido a pagar aos funcionários: ${formatarMoeda(totalLiquidoFolha)}</b></div>
+    </div>
+  </div>
+
+  <h2>Impostos e encargos sobre a folha</h2>
+  <div class="bloco">
+    <div class="resumo">
+      <div>INSS retido (recolhido ao INSS em nome do funcionário): ${formatarMoeda(totalInssRetido)}</div>
+      <div>FGTS (8%): ${formatarMoeda(totalFgtsFolha)}</div>
+      <div>INSS patronal (20%): ${formatarMoeda(inssPatronal)}</div>
+      <div style="grid-column:1/-1;"><b>Total de impostos/encargos sobre a folha: ${formatarMoeda(totalImpostosFolha)}</b></div>
+    </div>
+  </div>
+
+  <h2>Impostos da empresa sobre o faturamento (${nomeMes(mesIso)})</h2>
+  <div class="bloco">
+    <div class="resumo">
+      <div>PIS (0,65%): ${formatarMoeda(m.pis)}</div>
+      <div>COFINS (3%): ${formatarMoeda(m.cofins)}</div>
+      <div>ISS (${configGeral.aliquotaIss || 0}%): ${formatarMoeda(m.iss)}</div>
+      <div>ICMS (${configGeral.aliquotaIcms || 0}%): ${formatarMoeda(m.icms)}</div>
+      <div style="grid-column:1/-1;"><b>Total de impostos sobre o faturamento: ${formatarMoeda(m.total)}</b></div>
+    </div>
+  </div>
+
+  <div class="resumo" style="margin-top:14px;">
+    <div style="grid-column:1/-1;"><b>Total geral do mês (líquido + todos os impostos, sem IRPJ/CSLL que é trimestral): ${formatarMoeda(totalMesGeral)}</b></div>
   </div>
 
   <h2>Folha — ${ativos.length} funcionário${ativos.length === 1 ? "" : "s"} ativo${ativos.length === 1 ? "" : "s"}</h2>
   <table>
-    <thead><tr><th>Funcionário</th><th>Remuneração (c/ adicionais)</th><th>FGTS</th><th>INSS retido</th></tr></thead>
+    <thead><tr><th>Funcionário</th><th>Bruto</th><th>INSS retido</th><th>Líquido a pagar</th><th>FGTS</th></tr></thead>
     <tbody>${linhasFolha}</tbody>
-    <tfoot><tr><td><b>Total</b></td><td><b>${formatarMoeda(totalSalarios)}</b></td><td><b>${formatarMoeda(totalFgtsFolha)}</b></td><td><b>${formatarMoeda(totalInssRetido)}</b></td></tr></tfoot>
+    <tfoot><tr><td><b>Total</b></td><td><b>${formatarMoeda(totalBruto)}</b></td><td><b>${formatarMoeda(totalInssRetido)}</b></td><td><b>${formatarMoeda(totalLiquidoFolha)}</b></td><td><b>${formatarMoeda(totalFgtsFolha)}</b></td></tr></tfoot>
   </table>
 
   <h2>Faturamento usado no cálculo (${nomeMes(mesIso)})</h2>
