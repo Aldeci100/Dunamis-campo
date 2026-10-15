@@ -18,10 +18,19 @@
   <label>Mês do fechamento</label>
   <input type="month" id="filtroMes">
 
-  <div class="ponto-status" style="margin-top:16px;padding:16px;">
-    <div class="sub">Custo total no mês (mão de obra + despesas)</div>
-    <div class="grande" id="totalGeral" style="font-size:24px;">R$ 0,00</div>
+  <div class="grade-2" style="margin-top:16px;">
+    <div class="ponto-status" style="padding:16px;">
+      <div class="sub">Mão de obra no mês</div>
+      <div class="grande" id="totalMaoDeObraGeral" style="font-size:22px;">R$ 0,00</div>
+    </div>
+    <div class="ponto-status" style="padding:16px;">
+      <div class="sub">Despesas no mês</div>
+      <div class="grande" id="totalDespesasGeral" style="font-size:22px;">R$ 0,00</div>
+    </div>
   </div>
+  <p class="aviso" style="text-align:left;margin-top:6px;">
+    Custo total (mão de obra + despesas): <b id="totalGeral">R$ 0,00</b>
+  </p>
 
   <button type="button" class="btn-primaria" id="btnGerarFolha" style="margin-top:14px;">🧾 Gerar folha do mês (PDF)</button>
   <p class="aviso" style="text-align:left;margin-top:6px;">
@@ -56,6 +65,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/financeiro.js?v=6"></script>
+<script src="../js/modules/financeiro.js?v=7"></script>
 </body>
 </html>

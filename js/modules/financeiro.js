@@ -10,6 +10,8 @@ if (!ok) return;
 
 const filtroMes = document.getElementById("filtroMes");
 const totalGeralEl = document.getElementById("totalGeral");
+const totalMaoDeObraGeralEl = document.getElementById("totalMaoDeObraGeral");
+const totalDespesasGeralEl = document.getElementById("totalDespesasGeral");
 const listaObrasEl = document.getElementById("listaObrasFinanceiro");
 const modalDetalhe = document.getElementById("modalDetalheObra");
 const tituloDetalhe = document.getElementById("tituloDetalheObra");
@@ -39,7 +41,7 @@ let funcionariosCache = [];
 let pontosCache = [];
 let despesasCache = [];
 let tiposCustomCache = [];
-let configGeral = { salarioMinimo: 0 };
+let configGeral = { salarioMinimo: 0, adicionalHoraExtra: 50 };
 let ultimoResumo = {};
 
 function calcularInss(remuneracao) {
@@ -69,6 +71,50 @@ function valorInsalubridade(f) {
 
 function remuneracaoTotal(f) {
     return (f.salario || 0) + valorPericulosidade(f) + valorInsalubridade(f);
+}
+
+function limitesMes(mesIso) {
+    const [ano, mes] = mesIso.split("-").map(Number);
+    const inicio = new Date(ano, mes - 1, 1);
+    const fim = new Date(ano, mes, 1);
+    return { inicioIso: inicio.toISOString().slice(0, 10), fimIso: fim.toISOString().slice(0, 10) };
+}
+
+// Horas extras: só pra quem tem salário fixo (jornada mensal de 220h) —
+// diarista/terceirizado sem salário já é pago por hora, sem distinção
+// de "extra". Soma os pontos do mês (qualquer obra); o que passar de
+// 220h vira hora extra, com o adicional configurado (padrão 50%,
+// mínimo da CF art. 7º, XVI).
+function horasExtrasFuncionario(funcionarioId, mesIso) {
+    const { inicioIso, fimIso } = limitesMes(mesIso);
+    const pontosDoMes = pontosCache
+        .filter((p) => p.funcionarioId === funcionarioId)
+        .filter((p) => {
+            const dia = new Date(p.timestamp).toISOString().slice(0, 10);
+            return dia >= inicioIso && dia < fimIso;
+        })
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+    let horas = 0;
+    let entradaAberta = null;
+    pontosDoMes.forEach((p) => {
+        if (p.tipo === "entrada") entradaAberta = p.timestamp;
+        else if (p.tipo === "saida" && entradaAberta != null) {
+            horas += (p.timestamp - entradaAberta) / 3600000;
+            entradaAberta = null;
+        }
+    });
+
+    return Math.max(0, horas - JORNADA_MENSAL_HORAS);
+}
+
+function valorHoraExtra(f, mesIso) {
+    if (!(f.salario > 0)) return { horas: 0, valor: 0 };
+    const horas = horasExtrasFuncionario(f.id, mesIso);
+    if (!horas) return { horas: 0, valor: 0 };
+    const custoHora = f.custoHora || (f.salario / JORNADA_MENSAL_HORAS);
+    const adicional = 1 + (configGeral.adicionalHoraExtra ?? 50) / 100;
+    return { horas, valor: horas * custoHora * adicional };
 }
 
 function nomeMes(mesIso) {
@@ -233,8 +279,12 @@ function renderizar() {
         .map(([obraId, r]) => ({ obraId, ...r, total: r.maoDeObra + r.despesas }))
         .sort((a, b) => b.total - a.total);
 
-    const totalGeral = obrasComAtividade.reduce((soma, o) => soma + o.total, 0);
+    const totalMaoDeObraGeral = obrasComAtividade.reduce((soma, o) => soma + o.maoDeObra, 0);
+    const totalDespesasGeral = obrasComAtividade.reduce((soma, o) => soma + o.despesas, 0);
+    const totalGeral = totalMaoDeObraGeral + totalDespesasGeral;
     totalGeralEl.textContent = formatarMoeda(totalGeral);
+    totalMaoDeObraGeralEl.textContent = formatarMoeda(totalMaoDeObraGeral);
+    totalDespesasGeralEl.textContent = formatarMoeda(totalDespesasGeral);
 
     if (!obrasComAtividade.length) {
         listaObrasEl.innerHTML = '<div class="vazio">Nenhuma movimentação (ponto ou despesa) nesse mês ainda.</div>';
@@ -332,7 +382,8 @@ function gerarFolhaPdf() {
 
     const linhas = ativos.length
         ? ativos.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || "")).map((f) => {
-            const bruto = remuneracaoTotal(f);
+            const horaExtra = valorHoraExtra(f, mesIso);
+            const bruto = remuneracaoTotal(f) + horaExtra.valor;
             const fgts = bruto * FGTS_PERCENTUAL;
             const inss = calcularInss(bruto);
             const liquido = bruto - inss;
@@ -341,8 +392,9 @@ function gerarFolhaPdf() {
             totalInss += inss;
 
             const adicionais = [];
-            if (f.periculosidade) adicionais.push(`Pericul. ${f.periculosidade}%`);
-            if (f.insalubridade) adicionais.push(`Insalub. ${f.insalubridade}%`);
+            if (f.periculosidade) adicionais.push(`Pericul. ${f.periculosidade}%: ${formatarMoeda(valorPericulosidade(f))}`);
+            if (f.insalubridade) adicionais.push(`Insalub. ${f.insalubridade}%: ${formatarMoeda(valorInsalubridade(f))}`);
+            if (horaExtra.valor) adicionais.push(`H. extra ${horaExtra.horas.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}h: ${formatarMoeda(horaExtra.valor)}`);
 
             return `<tr>
                 <td>${f.nome}${adicionais.length ? `<br><span style="color:#888;font-size:12px;">${adicionais.join(" · ")}</span>` : ""}</td>
@@ -387,9 +439,11 @@ function gerarFolhaPdf() {
 
   <div class="aviso-box">
     ⚠️ Valores estimados a partir do cadastro <b>atual</b> dos
-    funcionários (o app não guarda histórico de salário por mês).
-    Confirme sempre com o contador/contabilidade antes de fechar a
-    folha oficial.
+    funcionários (o app não guarda histórico de salário por mês). Hora
+    extra é calculada só a partir das horas batidas no Ponto além de
+    220h/mês, com um único adicional configurado (não distingue dia
+    útil de domingo/feriado). Confirme sempre com o contador/
+    contabilidade antes de fechar a folha oficial.
   </div>
 
   <h2>Pagamento aos funcionários</h2>
@@ -452,7 +506,7 @@ observarColecao("despesas", (l) => { despesasCache = l; renderizar(); });
 observarColecao("tiposDespesa", (l) => { tiposCustomCache = l; renderizar(); });
 observarColecao("configFiscal", (docs) => {
     const geral = docs.find((d) => d.id === "geral");
-    configGeral = { salarioMinimo: geral?.salarioMinimo || 0 };
+    configGeral = { salarioMinimo: geral?.salarioMinimo || 0, adicionalHoraExtra: geral?.adicionalHoraExtra ?? 50 };
 });
 
 })();

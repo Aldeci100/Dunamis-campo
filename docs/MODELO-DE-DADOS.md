@@ -226,7 +226,10 @@ anotados ("Abonado: ...") no lugar de ficarem em branco.
 ## financeiro (fechamento)
 Não é coleção própria — a tela cruza mão de obra com `despesas`,
 agrupado por obra e por mês. Nada é salvo, é recalculado toda vez que
-a tela abre.
+a tela abre. Mão de obra e despesas são mostradas **separadas** no
+topo da tela (`totalMaoDeObraGeral`/`totalDespesasGeral`), não só um
+número combinado — o combinado (`totalGeral`) continua existindo,
+menor e por baixo, só como referência.
 
 Mão de obra tem duas regras, pra não depender de todo mundo bater
 ponto certinho:
@@ -235,7 +238,9 @@ ponto certinho:
   `custoHora × 220` se não tiver salário definido) — não pelas horas
   batidas. No fechamento mensal é o salário de 1 mês; no Relatório por
   obra (que olha todos os períodos) é o salário × meses corridos desde
-  `dataInicio` da obra.
+  `dataInicio` da obra. **Não inclui** periculosidade, insalubridade
+  nem hora extra — essa é uma métrica de custeio de projeto, separada
+  da folha de pagamento (ver "Folha do mês (PDF)" abaixo).
 - Funcionário SEM essa obra como atual, mas com `pontos` registrados
   nela (ex: terceirizado avulso, ou já trocou de obra), continua
   entrando pelas horas batidas × `custoHora` — pra não perder o custo
@@ -250,17 +255,19 @@ o mês filtrado — comparar o valor total do contrato com o custo de um
 mês só daria um número errado numa obra de vários meses).
 
 **Folha do mês (PDF)**: botão 🧾 no topo da tela, gera a folha de
-pagamento detalhada de todos os `funcionarios` com `status: "ativo"`,
-pro mês selecionado no filtro. Separa em dois blocos claros: **Pagamento
-aos funcionários** (bruto − INSS retido = líquido, o que efetivamente
-vai pro bolso de cada um) e **Impostos e encargos** (INSS retido + FGTS
-+ INSS patronal — o que é recolhido/pago pela empresa, não entra no
-líquido do funcionário). A tabela por funcionário mostra obra, bruto,
-INSS retido, líquido a pagar e FGTS. Reimplementa aqui as mesmas
-funções de `js/modules/obrigacoes.js` (`calcularInss`, `remuneracaoTotal`
-— periculosidade sobre o salário, insalubridade sobre
-`configFiscal/geral.salarioMinimo`) — duplicado em vez de compartilhado
-porque cada módulo é uma IIFE isolada (mesmo padrão de
+pagamento detalhada de todos os `funcionarios` com `status: "ativo"` —
+**nunca mistura despesas**, é só folha. Separa em dois blocos claros:
+**Pagamento aos funcionários** (bruto − INSS retido = líquido, o que
+efetivamente vai pro bolso de cada um) e **Impostos e encargos** (INSS
+retido + FGTS + INSS patronal — o que é recolhido/pago pela empresa,
+não entra no líquido do funcionário). Por funcionário, mostra o
+detalhamento em R$ (não só %) de periculosidade, insalubridade e hora
+extra numa legenda abaixo do nome, além de obra, bruto, INSS retido,
+líquido a pagar e FGTS na tabela. Reimplementa aqui as mesmas funções
+de `js/modules/obrigacoes.js` (`calcularInss`, `remuneracaoTotal`,
+`valorHoraExtra` — ver detalhes dessas funções na seção "obrigacoes
+(painel)" abaixo) — duplicado em vez de compartilhado porque cada
+módulo é uma IIFE isolada (mesmo padrão de
 `TIPOS_FIXOS`/`JORNADA_MENSAL_HORAS`, repetidos em
 obras.js/financeiro.js/funcionarios.js). Se a tabela do INSS ou a
 fórmula de periculosidade/insalubridade mudar, atualizar os dois
@@ -268,29 +275,51 @@ arquivos.
 
 ## obrigacoes (painel)
 A tela `pages/obrigacoes.html` calcula tudo na hora a partir de
-`funcionarios` (só os `status: "ativo"`), `vendas_navio` e
+`funcionarios` (só os `status: "ativo"`), `pontos`, `vendas_navio` e
 `configFiscal`. Acesso: `rh` e `financeiro`. Regime tributário da
 empresa: **Lucro Presumido** (confirmado pelo dono da empresa —
 se isso mudar um dia, os cálculos abaixo precisam ser revistos).
 
-- **Folha do mês**: por funcionário, a base não é só `salario` — é a
-  **remuneração total** (`remuneracaoTotal()` em js/modules/obrigacoes.js):
-  `salario` + periculosidade (`salario × periculosidade%`) + insalubridade
-  (`configFiscal/geral.salarioMinimo × insalubridade%`). Os dois adicionais
-  têm natureza salarial (CLT), então entram na base de FGTS (8% sobre a
-  remuneração total), INSS retido (tabela progressiva em `FAIXAS_INSS`,
-  js/modules/obrigacoes.js — **essa tabela é reajustada todo ano pelo
-  governo, precisa atualizar o arquivo quando isso acontecer**) e do 13º.
-  Também soma o INSS patronal (CPP), 20% sobre a folha bruta (remuneração
-  total) — no Lucro Presumido isso é uma guia própria (GPS/DCTFWeb), não
-  vem embutido em nada. A tela (e o relatório PDF) mostra isso separado
-  em dois blocos: **pagamento** (líquido = bruto − INSS retido, o que o
-  funcionário recebe) e **impostos/encargos** (INSS retido + FGTS + INSS
-  patronal, o que é recolhido/pago pela empresa).
+- **Folha do mês**: por funcionário, a base não é só `salario` — é o
+  **bruto** = **remuneração total** (`remuneracaoTotal()` em
+  js/modules/obrigacoes.js: `salario` + periculosidade
+  (`salario × periculosidade%`) + insalubridade
+  (`configFiscal/geral.salarioMinimo × insalubridade%`)) **+ hora
+  extra do mês** (`valorHoraExtra()`, calculada à parte — ver abaixo).
+  Periculosidade e insalubridade têm natureza salarial (CLT) e entram
+  também no 13º; hora extra entra no bruto do mês mas **não** no 13º
+  (limitação conhecida — 13º com média de horas extras do ano exigiria
+  guardar histórico mês a mês, que o app não tem). O bruto do mês
+  inteiro entra na base de FGTS (8%) e INSS retido (tabela progressiva
+  em `FAIXAS_INSS`, js/modules/obrigacoes.js — **essa tabela é
+  reajustada todo ano pelo governo, precisa atualizar o arquivo quando
+  isso acontecer**). Também soma o INSS patronal (CPP), 20% sobre a
+  folha bruta — no Lucro Presumido isso é uma guia própria
+  (GPS/DCTFWeb), não vem embutido em nada. A tela (e o relatório PDF)
+  mostra isso separado em dois blocos: **pagamento** (líquido = bruto
+  − INSS retido, o que o funcionário recebe) e **impostos/encargos**
+  (INSS retido + FGTS + INSS patronal, o que é recolhido/pago pela
+  empresa) — e detalha em R$ (não só %) quanto foi periculosidade,
+  insalubridade e hora extra de cada funcionário.
+  ```js
+  // Hora extra: só se aplica a quem tem salario > 0 (jornada mensal
+  // fixa de 220h) — diarista/terceirizado sem salário já é pago por
+  // hora, sem distinção de "extra". Soma TODOS os pontos do
+  // funcionário no mês, em qualquer obra; o que passar de 220h vira
+  // hora extra, com um único adicional configurado
+  // (configFiscal/geral.adicionalHoraExtra, padrão 50% — mínimo da
+  // CF art. 7º, XVI). NÃO distingue dia útil (mínimo 50%) de domingo/
+  // feriado (geralmente 100%) — avisado na tela e no relatório.
+  function valorHoraExtra(funcionario, mesIso) {
+    const horas = horasExtrasFuncionario(funcionario.id, mesIso); // soma pontos do mês − 220h, mínimo 0
+    const custoHora = funcionario.custoHora || (funcionario.salario / 220);
+    return horas * custoHora * (1 + adicionalHoraExtra / 100);
+  }
+  ```
 - **13º proporcional**: avos trabalhados no ano corrente (conta o mês
   atual se hoje já passou do dia 15, regra do "15 dias = 1 avo" da
   CLT), aplicado sobre a remuneração total (salário + periculosidade +
-  insalubridade), mais FGTS sobre esse valor.
+  insalubridade, **sem** hora extra), mais FGTS sobre esse valor.
 - **Férias**: período aquisitivo = 12 meses a partir de `ultimasFerias`
   (ou `dataAdmissao` se nunca tirou); período concessivo = os 12 meses
   seguintes. Só aparece na lista quem está no período concessivo com
@@ -328,6 +357,8 @@ configFiscal/geral
   salarioMinimo     number (R$, salário mínimo nacional vigente — base da
                             insalubridade dos funcionários; reajustado todo
                             ano, igual a tabela do INSS)
+  adicionalHoraExtra number (%, padrão 50 — mínimo da CF art. 7º, XVI; não
+                             distingue dia útil de domingo/feriado)
 
 configFiscal/{AAAA-MM}
   faturamentoServicos  number (faturamento de serviço das Obras nesse mês,

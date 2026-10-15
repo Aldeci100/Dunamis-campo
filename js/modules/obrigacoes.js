@@ -24,6 +24,7 @@ const inputAliquotaIcms = document.getElementById("configAliquotaIcms");
 const inputPresuncaoIrpj = document.getElementById("configPresuncaoIrpj");
 const inputPresuncaoCsll = document.getElementById("configPresuncaoCsll");
 const inputSalarioMinimo = document.getElementById("configSalarioMinimo");
+const inputAdicionalHoraExtra = document.getElementById("configAdicionalHoraExtra");
 const inputFaturamentoMes = document.getElementById("faturamentoServicosMes");
 const inputRelatorioMes = document.getElementById("relatorioMes");
 const totalImpostosMesEl = document.getElementById("totalImpostosMes");
@@ -35,6 +36,7 @@ const COLECAO_CONFIG_FISCAL = "configFiscal";
 
 const FGTS_PERCENTUAL = 0.08;
 const INSS_PATRONAL_ALIQUOTA = 0.20; // CPP — Lucro Presumido não embute isso em nenhuma guia única
+const JORNADA_MENSAL_HORAS = 220; // divisor/limite padrão CLT (jornada de 44h/semana)
 
 // Tabela de referência do INSS (empregado), progressiva por faixa —
 // ATUALIZAR todo início de ano, o governo reajusta os valores.
@@ -61,7 +63,8 @@ const CSLL_ALIQUOTA = 0.09;
 let funcionariosCache = [];
 let vendasNavioCache = [];
 let notasFiscaisCache = [];
-let configGeral = { aliquotaIss: 0, aliquotaIcms: 0, presuncaoIrpj: 32, presuncaoCsll: 32, salarioMinimo: 0 };
+let pontosCache = [];
+let configGeral = { aliquotaIss: 0, aliquotaIcms: 0, presuncaoIrpj: 32, presuncaoCsll: 32, salarioMinimo: 0, adicionalHoraExtra: 50 };
 let faturamentoPorMes = {}; // { "2026-09": 15000 } — complemento manual, além das notas fiscais
 
 function formatarMoeda(valor) {
@@ -111,6 +114,43 @@ function remuneracaoTotal(f) {
     return (f.salario || 0) + valorPericulosidade(f) + valorInsalubridade(f);
 }
 
+// Horas extras: só faz sentido pra quem tem salário fixo (jornada mensal
+// de 220h) — diarista/terceirizado sem salário já é pago por hora
+// trabalhada, sem distinção de "extra". Soma todos os pontos do
+// funcionário no mês (qualquer obra) e o que passar de 220h vira hora
+// extra, com o adicional configurado (padrão 50%, mínimo da CF art. 7º).
+function horasExtrasFuncionario(funcionarioId, mesIso) {
+    const { inicioIso, fimIso } = limitesMes(mesIso);
+    const pontosDoMes = pontosCache
+        .filter((p) => p.funcionarioId === funcionarioId)
+        .filter((p) => {
+            const dia = new Date(p.timestamp).toISOString().slice(0, 10);
+            return dia >= inicioIso && dia < fimIso;
+        })
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+    let horas = 0;
+    let entradaAberta = null;
+    pontosDoMes.forEach((p) => {
+        if (p.tipo === "entrada") entradaAberta = p.timestamp;
+        else if (p.tipo === "saida" && entradaAberta != null) {
+            horas += (p.timestamp - entradaAberta) / 3600000;
+            entradaAberta = null;
+        }
+    });
+
+    return Math.max(0, horas - JORNADA_MENSAL_HORAS);
+}
+
+function valorHoraExtra(f, mesIso) {
+    if (!(f.salario > 0)) return { horas: 0, valor: 0 };
+    const horas = horasExtrasFuncionario(f.id, mesIso);
+    if (!horas) return { horas: 0, valor: 0 };
+    const custoHora = f.custoHora || (f.salario / JORNADA_MENSAL_HORAS);
+    const adicional = 1 + (configGeral.adicionalHoraExtra ?? 50) / 100;
+    return { horas, valor: horas * custoHora * adicional };
+}
+
 function renderizarFolha(ativos) {
     if (!ativos.length) {
         listaFolhaEl.innerHTML = '<div class="vazio">Nenhum funcionário ativo cadastrado.</div>';
@@ -119,7 +159,8 @@ function renderizarFolha(ativos) {
         return;
     }
 
-    let totalBruto = 0, totalFgts = 0, totalInss = 0;
+    const mesAtual = new Date().toISOString().slice(0, 7);
+    let totalBruto = 0, totalFgts = 0, totalInss = 0, totalHorasExtras = 0;
 
     listaFolhaEl.innerHTML = ativos
         .slice()
@@ -128,17 +169,20 @@ function renderizarFolha(ativos) {
             const salario = f.salario || 0;
             const periculosidade = valorPericulosidade(f);
             const insalubridade = valorInsalubridade(f);
-            const bruto = remuneracaoTotal(f);
+            const horaExtra = valorHoraExtra(f, mesAtual);
+            const bruto = remuneracaoTotal(f) + horaExtra.valor;
             const fgts = bruto * FGTS_PERCENTUAL;
             const inss = calcularInss(bruto);
             const liquido = bruto - inss;
             totalBruto += bruto;
             totalFgts += fgts;
             totalInss += inss;
+            totalHorasExtras += horaExtra.valor;
 
             const adicionais = [];
             if (periculosidade) adicionais.push(`Periculosidade (${f.periculosidade}%): ${formatarMoeda(periculosidade)}`);
             if (insalubridade) adicionais.push(`Insalubridade (${f.insalubridade}%): ${formatarMoeda(insalubridade)}`);
+            if (horaExtra.valor) adicionais.push(`Hora extra (${horaExtra.horas.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}h × ${configGeral.adicionalHoraExtra ?? 50}%): ${formatarMoeda(horaExtra.valor)}`);
 
             return `
             <div class="item">
@@ -163,7 +207,8 @@ function renderizarFolha(ativos) {
 
     totalFolhaEl.textContent = formatarMoeda(totalBruto);
     resumoFolhaEl.innerHTML =
-        `${ativos.length} funcionário${ativos.length > 1 ? "s" : ""} · total bruto: ${formatarMoeda(totalBruto)}<br>` +
+        `${ativos.length} funcionário${ativos.length > 1 ? "s" : ""} · total bruto: ${formatarMoeda(totalBruto)}` +
+        `${totalHorasExtras ? ` (inclui ${formatarMoeda(totalHorasExtras)} de hora extra)` : ""}<br>` +
         `<b>Pagamento (líquido) aos funcionários: ${formatarMoeda(totalLiquido)}</b><br>` +
         `Impostos/encargos (INSS retido + FGTS + INSS patronal de ${formatarMoeda(inssPatronal)}): ${formatarMoeda(totalImpostos)}`;
 }
@@ -269,6 +314,7 @@ function preencherFormularioConfig() {
     inputPresuncaoIrpj.value = configGeral.presuncaoIrpj ?? 32;
     inputPresuncaoCsll.value = configGeral.presuncaoCsll ?? 32;
     inputSalarioMinimo.value = configGeral.salarioMinimo || "";
+    inputAdicionalHoraExtra.value = configGeral.adicionalHoraExtra ?? 50;
 
     const mesIso = new Date().toISOString().slice(0, 7);
     inputFaturamentoMes.value = faturamentoPorMes[mesIso] || "";
@@ -392,19 +438,30 @@ function gerarRelatorioPdf() {
     const t = calcularImpostosTrimestrais(mesIso);
 
     const ativos = funcionariosCache.filter((f) => f.status === "ativo");
-    const totalBruto = ativos.reduce((soma, f) => soma + remuneracaoTotal(f), 0);
+    const brutoPorFuncionario = ativos.map((f) => ({ f, horaExtra: valorHoraExtra(f, mesIso), base: remuneracaoTotal(f) }));
+    const totalBruto = brutoPorFuncionario.reduce((soma, x) => soma + x.base + x.horaExtra.valor, 0);
     const totalFgtsFolha = totalBruto * FGTS_PERCENTUAL;
-    const totalInssRetido = ativos.reduce((soma, f) => soma + calcularInss(remuneracaoTotal(f)), 0);
+    const totalInssRetido = brutoPorFuncionario.reduce((soma, x) => soma + calcularInss(x.base + x.horaExtra.valor), 0);
     const inssPatronal = totalBruto * INSS_PATRONAL_ALIQUOTA;
     const totalLiquidoFolha = totalBruto - totalInssRetido;
     const totalImpostosFolha = totalInssRetido + totalFgtsFolha + inssPatronal;
     const totalMesGeral = totalLiquidoFolha + totalImpostosFolha + m.total;
 
-    const linhasFolha = ativos.length
-        ? ativos.slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || "")).map((f) => {
-            const bruto = remuneracaoTotal(f);
+    const linhasFolha = brutoPorFuncionario.length
+        ? brutoPorFuncionario.slice().sort((a, b) => (a.f.nome || "").localeCompare(b.f.nome || "")).map(({ f, horaExtra, base }) => {
+            const bruto = base + horaExtra.valor;
             const inss = calcularInss(bruto);
-            return `<tr><td>${f.nome}</td><td>${formatarMoeda(bruto)}</td><td>${formatarMoeda(inss)}</td><td><b>${formatarMoeda(bruto - inss)}</b></td><td>${formatarMoeda(bruto * FGTS_PERCENTUAL)}</td></tr>`;
+            const adicionais = [];
+            if (f.periculosidade) adicionais.push(`Pericul. ${f.periculosidade}%: ${formatarMoeda(valorPericulosidade(f))}`);
+            if (f.insalubridade) adicionais.push(`Insalub. ${f.insalubridade}%: ${formatarMoeda(valorInsalubridade(f))}`);
+            if (horaExtra.valor) adicionais.push(`H. extra ${horaExtra.horas.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}h: ${formatarMoeda(horaExtra.valor)}`);
+            return `<tr>
+                <td>${f.nome}${adicionais.length ? `<br><span style="color:#888;font-size:12px;">${adicionais.join(" · ")}</span>` : ""}</td>
+                <td>${formatarMoeda(bruto)}</td>
+                <td>${formatarMoeda(inss)}</td>
+                <td><b>${formatarMoeda(bruto - inss)}</b></td>
+                <td>${formatarMoeda(bruto * FGTS_PERCENTUAL)}</td>
+            </tr>`;
         }).join("")
         : '<tr><td colspan="5">Nenhum funcionário ativo cadastrado.</td></tr>';
 
@@ -447,9 +504,11 @@ function gerarRelatorioPdf() {
   <div class="aviso-box">
     ⚠️ Valores estimados (regime Lucro Presumido). Folha, 13º e férias
     refletem o cadastro <b>atual</b> dos funcionários, não necessariamente
-    o que valia num mês passado. IRPJ/CSLL são de apuração trimestral —
-    não pague junto com os impostos mensais. Confirme sempre com o
-    contador antes de pagar qualquer guia.
+    o que valia num mês passado. Hora extra é calculada só a partir das
+    horas batidas no Ponto além de 220h/mês, com um único adicional
+    configurado (não distingue dia útil de domingo/feriado). IRPJ/CSLL
+    são de apuração trimestral — não pague junto com os impostos
+    mensais. Confirme sempre com o contador antes de pagar qualquer guia.
   </div>
 
   <h2>Pagamento aos funcionários</h2>
@@ -536,6 +595,7 @@ document.getElementById("btnSalvarConfigFiscal").addEventListener("click", async
         presuncaoIrpj: Number(inputPresuncaoIrpj.value) || 32,
         presuncaoCsll: Number(inputPresuncaoCsll.value) || 32,
         salarioMinimo: Number(inputSalarioMinimo.value) || 0,
+        adicionalHoraExtra: Number(inputAdicionalHoraExtra.value) || 50,
     }, "geral");
 });
 
@@ -573,6 +633,11 @@ observarColecao("funcionarios", (l) => {
     renderizarTudo();
 });
 
+observarColecao("pontos", (l) => {
+    pontosCache = l;
+    renderizarTudo();
+});
+
 observarColecao("vendas_navio", (l) => {
     vendasNavioCache = l;
     renderizarImpostosEmpresa();
@@ -591,6 +656,7 @@ observarColecao(COLECAO_CONFIG_FISCAL, (docs) => {
         presuncaoIrpj: geral?.presuncaoIrpj ?? 32,
         presuncaoCsll: geral?.presuncaoCsll ?? 32,
         salarioMinimo: geral?.salarioMinimo || 0,
+        adicionalHoraExtra: geral?.adicionalHoraExtra ?? 50,
     };
     faturamentoPorMes = {};
     docs.forEach((d) => {

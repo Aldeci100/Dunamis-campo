@@ -107,24 +107,31 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
 - **SST** — ASO, EPI, treinamentos (NR-35 etc.) e ocorrências, com aviso de vencido/vencendo — *sst*
 - **Financeiro** — fechamento mensal por obra: mão de obra (salário mensal de
   quem está alocado na obra + horas × custo/hora de quem não está, mesma
-  regra do Relatório de Obras) cruzada com as Despesas lançadas, mostrando o
-  custo total por obra no mês e a margem/prejuízo contra o valor do
-  contrato. Botão 🧾 **Gerar folha do mês (PDF)** monta a folha de pagamento
-  detalhada de todos os funcionários ativos, separando claramente **o que
-  vai pro bolso do funcionário** (líquido = bruto − INSS retido) do **que é
-  imposto/encargo** (INSS retido + FGTS + INSS patronal) — por funcionário
-  e com a obra de cada um, pro mês selecionado no filtro acima. Mesma
-  separação no relatório de Obrigações — *financeiro*
+  regra do Relatório de Obras) e Despesas, mostradas **separadas** (dois
+  totais distintos, não um número só misturado) além do custo total e da
+  margem/prejuízo contra o valor do contrato. Botão 🧾 **Gerar folha do mês
+  (PDF)** monta a folha de pagamento detalhada de todos os funcionários
+  ativos — nunca mistura despesas — separando claramente **o que vai pro
+  bolso do funcionário** (líquido = bruto − INSS retido) do **que é
+  imposto/encargo** (INSS retido + FGTS + INSS patronal), com o detalhe em
+  R$ de periculosidade, insalubridade e hora extra de cada um, e a obra de
+  cada um, pro mês selecionado no filtro acima. Mesma separação no
+  relatório de Obrigações — *financeiro*
 - **Usuários** — libera o acesso de cada e-mail a um setor — *admin*
-- **Obrigações** — folha do mês (salário + periculosidade/insalubridade do
-  funcionário + FGTS 8% + INSS retido, tabela progressiva de referência, +
-  INSS patronal 20% sobre a folha), 13º salário proporcional (avos
-  trabalhados no ano, sobre salário + adicionais + FGTS sobre ele) e alerta
-  de férias vencidas ou perto de vencer (com base na data das últimas
-  férias, cadastrada em Funcionários, ou na admissão se nunca tirou) — tudo
-  calculado sozinho a partir dos funcionários ativos. Insalubridade usa
-  como base o salário mínimo nacional, configurável na própria tela
-  (Configurações fiscais → Salário mínimo).
+- **Obrigações** — folha do mês com o detalhe em R$ de cada adicional por
+  funcionário (salário + periculosidade + insalubridade + **hora extra**,
+  calculada a partir das horas batidas no Ponto além de 220h/mês, com
+  adicional configurável — padrão 50%, mínimo da CF art. 7º) + FGTS 8% +
+  INSS retido (tabela progressiva de referência) + INSS patronal 20% sobre
+  a folha, separando **pagamento líquido ao funcionário** de **impostos/
+  encargos**; 13º salário proporcional (avos trabalhados no ano, sobre
+  salário + periculosidade + insalubridade — hora extra não entra no 13º,
+  limitação conhecida) e alerta de férias vencidas ou perto de vencer (com
+  base na data das últimas férias, cadastrada em Funcionários, ou na
+  admissão se nunca tirou) — tudo calculado sozinho a partir dos
+  funcionários ativos. Insalubridade usa como base o salário mínimo
+  nacional, e o adicional de hora extra, configuráveis na própria tela
+  (Configurações fiscais).
   Impostos da empresa (regime **Lucro Presumido**): PIS (0,65%), COFINS
   (3%), ISS e ICMS calculados por mês sobre o faturamento (Notas Fiscais de
   Obras entram pela data de faturamento delas + vendas dos Navios, ambos
