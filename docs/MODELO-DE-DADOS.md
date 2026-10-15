@@ -249,6 +249,19 @@ margem (líquido − custo acumulado da obra em **todos** os meses, não só
 o mês filtrado — comparar o valor total do contrato com o custo de um
 mês só daria um número errado numa obra de vários meses).
 
+**Folha do mês (PDF)**: botão 🧾 no topo da tela, gera a folha de
+pagamento detalhada (por funcionário: obra, salário, remuneração total,
+FGTS, INSS retido) de todos os `funcionarios` com `status: "ativo"`,
+pro mês selecionado no filtro. Reimplementa aqui as mesmas funções de
+`js/modules/obrigacoes.js` (`calcularInss`, `remuneracaoTotal` —
+periculosidade sobre o salário, insalubridade sobre
+`configFiscal/geral.salarioMinimo`) e também soma o INSS patronal —
+duplicado em vez de compartilhado porque cada módulo é uma IIFE
+isolada (mesmo padrão de `TIPOS_FIXOS`/`JORNADA_MENSAL_HORAS`,
+repetidos em obras.js/financeiro.js/funcionarios.js). Se a tabela do
+INSS ou a fórmula de periculosidade/insalubridade mudar, atualizar os
+dois arquivos.
+
 ## obrigacoes (painel)
 A tela `pages/obrigacoes.html` calcula tudo na hora a partir de
 `funcionarios` (só os `status: "ativo"`), `vendas_navio` e
