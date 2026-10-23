@@ -379,9 +379,14 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
         .filter((p) => p.funcionarioId === funcionario.id && p.timestamp >= inicio && p.timestamp < fim)
         .sort((a, b) => a.timestamp - b.timestamp);
 
+    const chaveDia = (ts) => {
+        const d = new Date(ts);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+
     const porDia = {};
     pontosDoMes.forEach((p) => {
-        const dia = new Date(p.timestamp).toISOString().slice(0, 10);
+        const dia = chaveDia(p.timestamp);
         (porDia[dia] = porDia[dia] || []).push(p);
     });
 
@@ -393,32 +398,46 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
     const dias = Array.from(new Set([...Object.keys(porDia), ...Object.keys(abonoPorDia)])).sort();
     let totalMesHoras = 0;
 
+    function celulaLocalizacao(p) {
+        if (!p.geo) return "<i>sem localização</i>";
+        const lat = p.geo.lat.toFixed(5);
+        const lng = p.geo.lng.toFixed(5);
+        return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat}, ${lng}</a>` +
+            (p.geo.precisao ? `<br><span class="peq">precisão ~${p.geo.precisao}m</span>` : "");
+    }
+
     const linhas = dias.length
         ? dias.map((dia) => {
             const pontos = porDia[dia] || [];
-            const pares = [];
             let entradaAberta = null;
             let horasDia = 0;
             pontos.forEach((p) => {
                 if (p.tipo === "entrada") {
                     entradaAberta = p;
                 } else if (p.tipo === "saida" && entradaAberta) {
-                    pares.push(`${formatarHora(entradaAberta.timestamp)} — ${formatarHora(p.timestamp)}`);
                     horasDia += (p.timestamp - entradaAberta.timestamp) / 3600000;
                     entradaAberta = null;
                 }
             });
-            if (entradaAberta) pares.push(`${formatarHora(entradaAberta.timestamp)} — (sem saída)`);
             totalMesHoras += horasDia;
 
             const abono = abonoPorDia[dia];
+            const linhasDia = pontos.map((p) => {
+                const obra = obrasCache.find((o) => o.id === p.obraId);
+                return `<td>${p.tipo === "entrada" ? "Entrada" : "Saída"}</td><td>${formatarHora(p.timestamp)}</td><td>${obra ? obra.nome : "—"}</td><td>${celulaLocalizacao(p)}</td>`;
+            });
             if (abono) {
-                pares.push(`<i>Abonado: ${rotuloAbono[abono.tipo] || abono.tipo}${abono.motivo ? " — " + abono.motivo : ""}</i>`);
+                linhasDia.push(`<td colspan="4"><i>Abonado: ${rotuloAbono[abono.tipo] || abono.tipo}${abono.motivo ? " — " + abono.motivo : ""}</i></td>`);
             }
 
-            return `<tr><td>${formatarDataIso(dia)}</td><td>${pares.join("<br>")}</td><td>${formatarHoras(horasDia)}</td></tr>`;
+            const n = linhasDia.length;
+            return linhasDia.map((resto, i) => {
+                const inicio = i === 0 ? `<td rowspan="${n}">${formatarDataIso(dia)}</td>` : "";
+                const fimLinha = i === 0 ? `<td rowspan="${n}">${formatarHoras(horasDia)}</td>` : "";
+                return `<tr>${inicio}${resto}${fimLinha}</tr>`;
+            }).join("");
         }).join("")
-        : '<tr><td colspan="3">Nenhum ponto registrado nesse mês.</td></tr>';
+        : '<tr><td colspan="6">Nenhum ponto registrado nesse mês.</td></tr>';
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -426,13 +445,15 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
 <meta charset="UTF-8">
 <title>Espelho de Ponto — ${funcionario.nome}</title>
 <style>
-  body { font-family: system-ui, Arial, sans-serif; color: #111; padding: 32px; max-width: 800px; margin: 0 auto; }
+  body { font-family: system-ui, Arial, sans-serif; color: #111; padding: 32px; max-width: 900px; margin: 0 auto; }
   h1 { font-size: 20px; margin-bottom: 4px; }
   h2 { font-size: 15px; margin-top: 4px; color: #444; font-weight: normal; }
   .dados { margin-top: 18px; font-size: 14px; line-height: 1.7; }
   table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ddd; vertical-align: top; }
   th { background: #f2f2f2; }
+  .peq { font-size: 11px; color: #666; }
+  a { color: #0b5cad; }
   tfoot td { font-weight: bold; border-top: 2px solid #333; }
   .assinaturas { display: flex; gap: 40px; margin-top: 60px; }
   .assinatura { flex: 1; border-top: 1px solid #333; padding-top: 6px; font-size: 13px; text-align: center; }
@@ -451,9 +472,9 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
   </div>
 
   <table>
-    <thead><tr><th>Data</th><th>Marcações</th><th>Total do dia</th></tr></thead>
+    <thead><tr><th>Data</th><th>Tipo</th><th>Hora</th><th>Obra</th><th>Localização</th><th>Total do dia</th></tr></thead>
     <tbody>${linhas}</tbody>
-    <tfoot><tr><td colspan="2">Total do mês</td><td>${formatarHoras(totalMesHoras)}</td></tr></tfoot>
+    <tfoot><tr><td colspan="5">Total do mês</td><td>${formatarHoras(totalMesHoras)}</td></tr></tfoot>
   </table>
 
   <div class="assinaturas">

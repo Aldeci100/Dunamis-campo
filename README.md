@@ -87,7 +87,9 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   campo PIN do cadastro),
   **periculosidade e insalubridade (%, opcionais)** — entram automaticamente
   no cálculo de FGTS, INSS e 13º em Obrigações, já que têm natureza salarial —
-  espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos
+  espelho de ponto (uma linha por marcação: data, entrada/saída, hora, obra e
+  localização com link pro Google Maps, mais o total do dia e do mês — pronto
+  pra imprimir com assinaturas), abono de falta, resumo no topo (total de ativos e quantos
   estão em cada obra, sempre com o total geral independente de filtro), busca
   por nome e filtro por obra e por status, e exportação da lista (nome/função/
   obra/status, seguindo o filtro ativo) em Excel (CSV) ou PDF — *rh*
