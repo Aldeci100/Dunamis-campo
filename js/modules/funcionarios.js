@@ -427,7 +427,8 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
             const abono = abonoPorDia[dia];
             const linhasDia = pontos.map((p) => {
                 const obra = obrasCache.find((o) => o.id === p.obraId);
-                return `<td>${p.tipo === "entrada" ? "Entrada" : "Saída"}</td><td>${formatarHora(p.timestamp)}</td><td>${obra ? obra.nome : "—"}</td><td>${celulaLocalizacao(p)}</td>`;
+                const rotulo = p.tipo === "entrada" ? (p.almoco ? "Volta do almoço" : "Entrada") : (p.almoco ? "Saída p/ almoço" : "Saída");
+                return `<td>${rotulo}</td><td>${formatarHora(p.timestamp)}</td><td>${obra ? obra.nome : "—"}</td><td>${celulaLocalizacao(p)}</td>`;
             });
             if (abono) {
                 linhasDia.push(`<td colspan="4"><i>Abonado: ${rotuloAbono[abono.tipo] || abono.tipo}${abono.motivo ? " — " + abono.motivo : ""}</i></td>`);

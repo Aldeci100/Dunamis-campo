@@ -91,6 +91,10 @@ pontos/{id}
   obraId          string
   obraNome        string   (cópia do nome da obra na hora da marcação)
   tipo            "entrada" | "saida"
+  almoco          true     (só quando for a saída pro almoço ou a volta dele;
+                            é uma saída + uma entrada comuns, só marcadas —
+                            por isso todo cálculo de horas já desconta o
+                            almoço sem precisar de regra extra)
   timestamp       number   (Date.now(), em ms)
   geo             { lat, lng, precisao }
   fotoUrl         string | null

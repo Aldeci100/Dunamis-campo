@@ -16,6 +16,7 @@ let funcionarioProprio = null;
 const selectFunc = document.getElementById("pontoFuncionario");
 const selectObra = document.getElementById("pontoObra");
 const btnBater = document.getElementById("btnBaterPonto");
+const btnAlmoco = document.getElementById("btnAlmoco");
 const pinInput = document.getElementById("pontoPin");
 const geoInfo = document.getElementById("pontoGeoInfo");
 const ultimoRegistroEl = document.getElementById("pontoUltimoRegistro");
@@ -27,6 +28,16 @@ const blocoIdentidade = document.getElementById("blocoIdentidade");
 let funcionariosCache = [];
 let obrasCache = [];
 let proximoTipo = "entrada";
+let proximoAlmoco = false;   // a próxima marcação é a volta do almoço
+let podeSairAlmoco = false;  // está trabalhando: pode marcar a saída pro almoço
+
+// Almoço = uma saída e uma entrada marcadas com almoco:true. Assim todo
+// cálculo de horas do sistema (pares entrada→saída) já desconta o almoço
+// sem precisar mudar em lugar nenhum.
+function rotuloMarcacao(p) {
+    if (p.tipo === "entrada") return p.almoco ? "Volta do almoço" : "Entrada";
+    return p.almoco ? "Saída para o almoço" : "Saída";
+}
 
 function atualizarRelogio() {
     horaAtualEl.textContent = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -82,6 +93,8 @@ async function carregarRegistrosHoje() {
         listaHojeEl.innerHTML = '<div class="vazio">Nenhum registro hoje.</div>';
         ultimoRegistroEl.textContent = "Nenhum registro hoje";
         proximoTipo = "entrada";
+        proximoAlmoco = false;
+        podeSairAlmoco = false;
     } else {
         listaHojeEl.innerHTML = hoje.map((p) => {
             const obra = obrasCache.find((o) => o.id === p.obraId) || (p.obraNome ? { nome: p.obraNome } : null);
@@ -89,7 +102,7 @@ async function carregarRegistrosHoje() {
             return `<div class="item">
                 <div class="linha-topo">
                     <div>
-                        <div class="nome">${p.tipo === "entrada" ? "Entrada" : "Saída"} · ${hora}</div>
+                        <div class="nome">${rotuloMarcacao(p)} · ${hora}</div>
                         <div class="sub">${obra ? obra.nome : ""}${p.geo ? " · localização registrada" : ""}</div>
                     </div>
                 </div>
@@ -98,8 +111,10 @@ async function carregarRegistrosHoje() {
 
         const ultimo = hoje[hoje.length - 1];
         proximoTipo = ultimo.tipo === "entrada" ? "saida" : "entrada";
+        proximoAlmoco = ultimo.tipo === "saida" && !!ultimo.almoco;
+        podeSairAlmoco = ultimo.tipo === "entrada";
         const horaUltimo = new Date(ultimo.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-        ultimoRegistroEl.textContent = `Última marcação: ${ultimo.tipo === "entrada" ? "entrada" : "saída"} às ${horaUltimo}`;
+        ultimoRegistroEl.textContent = `Última marcação: ${rotuloMarcacao(ultimo).toLowerCase()} às ${horaUltimo}`;
     }
 
     atualizarEstadoBotao();
@@ -110,8 +125,12 @@ function atualizarEstadoBotao() {
         ? !!(funcionarioProprio && funcionarioProprio.obraAtualId)
         : !!selectFunc.value && !!selectObra.value;
     btnBater.disabled = !pronto;
-    btnBater.textContent = proximoTipo === "entrada" ? "Marcar entrada" : "Marcar saída";
+    btnBater.textContent = proximoAlmoco
+        ? "🍽️ Voltar do almoço"
+        : (proximoTipo === "entrada" ? "Marcar entrada" : "Marcar saída");
     btnBater.className = "btn-ponto " + (proximoTipo === "entrada" ? "btn-entrada" : "btn-saida");
+    btnAlmoco.style.display = podeSairAlmoco ? "block" : "none";
+    btnAlmoco.disabled = !pronto;
     if (modoIndividual) {
         geoInfo.textContent = pronto
             ? "Toque para registrar com sua localização atual."
@@ -139,7 +158,7 @@ function obterLocalizacao() {
     });
 }
 
-btnBater.addEventListener("click", async () => {
+async function registrarPonto(tipo, almoco) {
     const funcId = modoIndividual ? funcionarioIdUsuario : selectFunc.value;
     const obraId = modoIndividual ? (funcionarioProprio && funcionarioProprio.obraAtualId) : selectObra.value;
     if (!funcId || !obraId) return;
@@ -155,6 +174,7 @@ btnBater.addEventListener("click", async () => {
     }
 
     btnBater.disabled = true;
+    btnAlmoco.disabled = true;
     geoInfo.textContent = "Obtendo localização...";
 
     const geo = await obterLocalizacao();
@@ -163,7 +183,8 @@ btnBater.addEventListener("click", async () => {
         funcionarioId: funcId,
         obraId,
         obraNome,
-        tipo: proximoTipo,
+        tipo,
+        ...(almoco ? { almoco: true } : {}),
         timestamp: Date.now(),
         geo,
     });
@@ -176,7 +197,10 @@ btnBater.addEventListener("click", async () => {
         : "Registrado sem localização (sem permissão ou sinal de GPS).";
 
     await carregarRegistrosHoje();
-});
+}
+
+btnBater.addEventListener("click", () => registrarPonto(proximoTipo, proximoAlmoco));
+btnAlmoco.addEventListener("click", () => registrarPonto("saida", true));
 
 async function iniciarModoIndividual() {
     blocoSelecao.style.display = "none";
