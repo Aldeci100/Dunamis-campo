@@ -235,6 +235,28 @@ function obterLocalizacao() {
     });
 }
 
+let mostrandoErroPin = false;
+
+function erroPin(mensagem) {
+    mostrandoErroPin = true;
+    geoInfo.textContent = mensagem;
+    geoInfo.style.color = "var(--danger)";
+    pinInput.style.borderColor = "var(--danger)";
+    pinInput.focus();
+}
+
+function limparErroPin() {
+    mostrandoErroPin = false;
+    geoInfo.style.color = "";
+    pinInput.style.borderColor = "";
+}
+
+pinInput.addEventListener("input", () => {
+    if (!mostrandoErroPin) return;
+    limparErroPin();
+    atualizarEstadoBotao(); // volta o texto de instrução
+});
+
 async function registrarPonto(tipo, almoco) {
     const funcId = modoIndividual ? funcionarioIdUsuario : selectFunc.value;
     const obraId = modoIndividual ? (funcionarioProprio && funcionarioProprio.obraAtualId) : selectObra.value;
@@ -245,10 +267,18 @@ async function registrarPonto(tipo, almoco) {
         ? (funcionarioProprio.obraAtualNome || "")
         : (obrasCache.find((o) => o.id === obraId)?.nome || "");
     // No modo individual o login já identifica a pessoa — PIN só vale pro aparelho compartilhado.
-    if (!modoIndividual && func && func.pin && pinInput.value.trim() !== func.pin) {
-        geoInfo.textContent = "PIN incorreto. Confira com o funcionário e tente novamente.";
-        return;
+    if (!modoIndividual && func && func.pin) {
+        const digitado = pinInput.value.trim();
+        if (!digitado) {
+            erroPin("Digite o seu PIN de 4 dígitos para marcar o ponto.");
+            return;
+        }
+        if (digitado !== func.pin) {
+            erroPin("PIN incorreto. Confira com o funcionário e tente novamente.");
+            return;
+        }
     }
+    limparErroPin();
 
     btnBater.disabled = true;
     geoInfo.textContent = "Obtendo localização...";
