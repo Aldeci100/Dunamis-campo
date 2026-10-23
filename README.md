@@ -97,9 +97,11 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   - **Individual (recomendado)** — *funcionario*: cada funcionário tem login
     próprio (e-mail ou CPF + senha), instala o app no celular e vê/bate só o
     ponto **dele** (não enxerga os outros nem nada de obras/financeiro). A
-    obra vem do cadastro dele. Tem botões de **saída para o almoço** e
-    **volta do almoço** — o intervalo é descontado das horas trabalhadas e
-    aparece no espelho de ponto. Cria-se em **Usuários** → marcar "Funcionário",
+    obra vem do cadastro dele. Um botão só, sempre na ordem fixa:
+    **1 entrada → 2 ida para o almoço → 3 volta do almoço → 4 saída** (sem
+    escolher qual marcação fazer; depois da saída o dia fica encerrado). O
+    intervalo do almoço é descontado das horas trabalhadas e aparece no
+    espelho de ponto. Cria-se em **Usuários** → marcar "Funcionário",
     escolher quem é e, se quiser, já preencher a senha inicial
   - **Aparelho da obra** — *campo*: login único compartilhado, ex:
     `campo@dunamis.com`, num aparelho fixo do encarregado; cada funcionário

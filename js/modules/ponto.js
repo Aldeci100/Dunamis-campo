@@ -16,7 +16,6 @@ let funcionarioProprio = null;
 const selectFunc = document.getElementById("pontoFuncionario");
 const selectObra = document.getElementById("pontoObra");
 const btnBater = document.getElementById("btnBaterPonto");
-const btnAlmoco = document.getElementById("btnAlmoco");
 const pinInput = document.getElementById("pontoPin");
 const geoInfo = document.getElementById("pontoGeoInfo");
 const ultimoRegistroEl = document.getElementById("pontoUltimoRegistro");
@@ -28,15 +27,15 @@ const blocoIdentidade = document.getElementById("blocoIdentidade");
 let funcionariosCache = [];
 let obrasCache = [];
 let proximoTipo = "entrada";
-let proximoAlmoco = false;   // a próxima marcação é a volta do almoço
-let podeSairAlmoco = false;  // está trabalhando: pode marcar a saída pro almoço
+let proximoAlmoco = false;   // a próxima marcação é a ida ou a volta do almoço
+let jornadaEncerrada = false; // as 4 marcações do dia já foram feitas
 
 // Almoço = uma saída e uma entrada marcadas com almoco:true. Assim todo
 // cálculo de horas do sistema (pares entrada→saída) já desconta o almoço
 // sem precisar mudar em lugar nenhum.
 function rotuloMarcacao(p) {
     if (p.tipo === "entrada") return p.almoco ? "Volta do almoço" : "Entrada";
-    return p.almoco ? "Saída para o almoço" : "Saída";
+    return p.almoco ? "Ida para o almoço" : "Saída";
 }
 
 function atualizarRelogio() {
@@ -94,7 +93,7 @@ async function carregarRegistrosHoje() {
         ultimoRegistroEl.textContent = "Nenhum registro hoje";
         proximoTipo = "entrada";
         proximoAlmoco = false;
-        podeSairAlmoco = false;
+        jornadaEncerrada = false;
     } else {
         listaHojeEl.innerHTML = hoje.map((p) => {
             const obra = obrasCache.find((o) => o.id === p.obraId) || (p.obraNome ? { nome: p.obraNome } : null);
@@ -110,9 +109,19 @@ async function carregarRegistrosHoje() {
         }).join("");
 
         const ultimo = hoje[hoje.length - 1];
-        proximoTipo = ultimo.tipo === "entrada" ? "saida" : "entrada";
-        proximoAlmoco = ultimo.tipo === "saida" && !!ultimo.almoco;
-        podeSairAlmoco = ultimo.tipo === "entrada";
+        // Ordem fixa, sem escolha: 1 entrada → 2 ida pro almoço → 3 volta do
+        // almoço → 4 saída. Quem decide o próximo passo é a última marcação.
+        jornadaEncerrada = false;
+        if (ultimo.tipo === "entrada" && !ultimo.almoco) {
+            proximoTipo = "saida"; proximoAlmoco = true;      // 2 ida pro almoço
+        } else if (ultimo.tipo === "saida" && ultimo.almoco) {
+            proximoTipo = "entrada"; proximoAlmoco = true;    // 3 volta do almoço
+        } else if (ultimo.tipo === "entrada" && ultimo.almoco) {
+            proximoTipo = "saida"; proximoAlmoco = false;     // 4 saída
+        } else {
+            proximoTipo = "entrada"; proximoAlmoco = false;
+            jornadaEncerrada = true;                          // saída final já feita
+        }
         const horaUltimo = new Date(ultimo.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
         ultimoRegistroEl.textContent = `Última marcação: ${rotuloMarcacao(ultimo).toLowerCase()} às ${horaUltimo}`;
     }
@@ -124,13 +133,15 @@ function atualizarEstadoBotao() {
     const pronto = modoIndividual
         ? !!(funcionarioProprio && funcionarioProprio.obraAtualId)
         : !!selectFunc.value && !!selectObra.value;
-    btnBater.disabled = !pronto;
-    btnBater.textContent = proximoAlmoco
-        ? "🍽️ Voltar do almoço"
-        : (proximoTipo === "entrada" ? "Marcar entrada" : "Marcar saída");
-    btnBater.className = "btn-ponto " + (proximoTipo === "entrada" ? "btn-entrada" : "btn-saida");
-    btnAlmoco.style.display = podeSairAlmoco ? "block" : "none";
-    btnAlmoco.disabled = !pronto;
+    btnBater.disabled = !pronto || jornadaEncerrada;
+    if (jornadaEncerrada) {
+        btnBater.textContent = "✔ Jornada de hoje encerrada";
+    } else if (proximoAlmoco) {
+        btnBater.textContent = proximoTipo === "saida" ? "🍽️ Ida para o almoço" : "🍽️ Volta do almoço";
+    } else {
+        btnBater.textContent = proximoTipo === "entrada" ? "Marcar entrada" : "Marcar saída";
+    }
+    btnBater.className = "btn-ponto " + (proximoTipo === "entrada" && !jornadaEncerrada ? "btn-entrada" : "btn-saida");
     if (modoIndividual) {
         geoInfo.textContent = pronto
             ? "Toque para registrar com sua localização atual."
@@ -174,7 +185,6 @@ async function registrarPonto(tipo, almoco) {
     }
 
     btnBater.disabled = true;
-    btnAlmoco.disabled = true;
     geoInfo.textContent = "Obtendo localização...";
 
     const geo = await obterLocalizacao();
@@ -199,8 +209,10 @@ async function registrarPonto(tipo, almoco) {
     await carregarRegistrosHoje();
 }
 
-btnBater.addEventListener("click", () => registrarPonto(proximoTipo, proximoAlmoco));
-btnAlmoco.addEventListener("click", () => registrarPonto("saida", true));
+btnBater.addEventListener("click", () => {
+    if (jornadaEncerrada) return;
+    registrarPonto(proximoTipo, proximoAlmoco);
+});
 
 async function iniciarModoIndividual() {
     blocoSelecao.style.display = "none";
