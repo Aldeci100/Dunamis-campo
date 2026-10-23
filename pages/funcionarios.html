@@ -48,6 +48,7 @@
     <button type="button" class="btn-secundaria" id="btnExportarCsv">📊 Exportar Excel</button>
     <button type="button" class="btn-secundaria" id="btnExportarPdf">🖨️ Gerar PDF</button>
   </div>
+  <button type="button" class="btn-secundaria" id="btnAbrirPins" style="margin-top:10px;">🔑 Ver / trocar PINs de ponto</button>
   <p class="aviso" style="text-align:left;margin-top:6px;">
     A lista abaixo e a exportação seguem o filtro. O resumo no topo
     sempre mostra o total geral da empresa.
@@ -159,6 +160,22 @@
   </div>
 </div>
 
+<div class="modal-fundo" id="modalPins" style="display:none;">
+  <div class="modal-caixa">
+    <h2>PINs de ponto</h2>
+    <p class="aviso" style="text-align:left;margin-top:4px;">
+      PIN de 4 dígitos que cada funcionário digita no Ponto pra
+      confirmar que é ele. Não é senha de verdade (fica salvo como
+      texto), serve só pra evitar que um bata o ponto pelo outro.
+      PINs repetidos ou em branco aparecem destacados.
+    </p>
+
+    <div id="listaPins" class="lista" style="margin-top:12px;"></div>
+
+    <button type="button" class="btn-secundaria" style="margin-top:14px;" id="btnFecharPins">Fechar</button>
+  </div>
+</div>
+
 <div class="modal-fundo" id="modalEspelho" style="display:none;">
   <div class="modal-caixa">
     <h2>Espelho de ponto</h2>
@@ -209,6 +226,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/funcionarios.js?v=6"></script>
+<script src="../js/modules/funcionarios.js?v=7"></script>
 </body>
 </html>

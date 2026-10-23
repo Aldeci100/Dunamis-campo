@@ -553,6 +553,104 @@ function gerarPdfFuncionarios() {
 document.getElementById("btnExportarCsv").addEventListener("click", exportarCsv);
 document.getElementById("btnExportarPdf").addEventListener("click", gerarPdfFuncionarios);
 
+// ---------- PINs de ponto (ver / trocar) ----------
+
+const modalPins = document.getElementById("modalPins");
+const listaPinsEl = document.getElementById("listaPins");
+
+function pinsEmUso(exceto) {
+    const mapa = {};
+    funcionariosCache.forEach((f) => {
+        if (f.id === exceto || !f.pin) return;
+        (mapa[f.pin] = mapa[f.pin] || []).push(f.nome);
+    });
+    return mapa;
+}
+
+function gerarPinLivre(exceto) {
+    const usados = pinsEmUso(exceto);
+    for (let i = 0; i < 200; i++) {
+        const pin = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+        if (!usados[pin]) return pin;
+    }
+    return String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+}
+
+function renderizarPins() {
+    if (!funcionariosCache.length) {
+        listaPinsEl.innerHTML = '<div class="vazio">Nenhum funcionário cadastrado.</div>';
+        return;
+    }
+
+    // guarda o que já foi digitado e ainda não salvo, pra não perder
+    // quando outra linha é salva e a lista redesenha
+    const pendentes = {};
+    listaPinsEl.querySelectorAll(".item").forEach((el) => {
+        const f = funcionariosCache.find((x) => x.id === el.dataset.id);
+        const valor = el.querySelector(".input-pin").value;
+        if (f && valor !== (f.pin || "")) pendentes[el.dataset.id] = valor;
+    });
+
+    const ordemStatus = { ativo: 0, afastado: 1, inativo: 2 };
+    const lista = funcionariosCache
+        .slice()
+        .sort((a, b) => (ordemStatus[a.status] ?? 9) - (ordemStatus[b.status] ?? 9) || (a.nome || "").localeCompare(b.nome || ""));
+
+    listaPinsEl.innerHTML = lista.map((f) => {
+        const repetidoCom = f.pin ? (pinsEmUso(f.id)[f.pin] || []) : [];
+        const aviso = !f.pin
+            ? '<div class="sub" style="color:var(--warn);">Sem PIN — o Ponto não confere a identidade</div>'
+            : repetidoCom.length
+                ? `<div class="sub" style="color:var(--danger);">PIN repetido com: ${repetidoCom.join(", ")}</div>`
+                : "";
+
+        return `
+        <div class="item" data-id="${f.id}">
+            <div class="linha-topo">
+                <div>
+                    <div class="nome">${f.nome}</div>
+                    <div class="sub">${f.cargo || ""}${f.cargo ? " · " : ""}${rotuloStatus[f.status] || f.status}</div>
+                </div>
+            </div>
+            ${aviso}
+            <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+                <input type="text" class="input-pin" maxlength="4" inputmode="numeric" placeholder="----" value="${f.pin || ""}" style="flex:1;letter-spacing:4px;text-align:center;${repetidoCom.length ? "border-color:var(--danger);" : ""}">
+                <button type="button" class="btn-secundaria btn-gerar-pin" style="width:auto;padding:12px 14px;">🎲 Gerar</button>
+                <button type="button" class="btn-primaria btn-salvar-pin" style="width:auto;margin-top:0;padding:12px 14px;">Salvar</button>
+            </div>
+        </div>`;
+    }).join("");
+
+    listaPinsEl.querySelectorAll(".item").forEach((el) => {
+        const id = el.dataset.id;
+        const input = el.querySelector(".input-pin");
+        if (id in pendentes) input.value = pendentes[id];
+
+        el.querySelector(".btn-gerar-pin").addEventListener("click", () => {
+            input.value = gerarPinLivre(id);
+        });
+
+        el.querySelector(".btn-salvar-pin").addEventListener("click", async () => {
+            const pin = input.value.trim();
+            if (pin && !/^\d{4}$/.test(pin)) {
+                alert("O PIN deve ter exatamente 4 dígitos, ou ficar em branco.");
+                return;
+            }
+            await salvarDocumento(COLECAO, { pin }, id);
+        });
+    });
+}
+
+document.getElementById("btnAbrirPins").addEventListener("click", () => {
+    listaPinsEl.innerHTML = "";
+    renderizarPins();
+    modalPins.style.display = "flex";
+});
+document.getElementById("btnFecharPins").addEventListener("click", () => {
+    modalPins.style.display = "none";
+});
+modalPins.addEventListener("click", (e) => { if (e.target === modalPins) modalPins.style.display = "none"; });
+
 observarColecao("obras", (obras) => {
     obrasCache = obras;
     preencherSelectObras();
@@ -570,6 +668,9 @@ observarColecao("abonos", (abonos) => {
     if (modalAbono.style.display === "flex") renderizarAbonosFuncionario();
 });
 
-observarColecao(COLECAO, renderizarFuncionarios);
+observarColecao(COLECAO, (funcionarios) => {
+    renderizarFuncionarios(funcionarios);
+    if (modalPins.style.display === "flex") renderizarPins();
+});
 
 })();
