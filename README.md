@@ -81,9 +81,10 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   faturamento** de cada NF emitida — essa data alimenta sozinha o cálculo
   de impostos do mês em Obrigações
 - **Funcionários** — cadastro, obra atual, direito a vale-transporte/alimentação,
-  botão **🔑 Ver / trocar PINs de ponto** (lista todos os PINs de uma vez,
-  destaca repetidos e em branco, gera PIN livre com um toque e salva por
-  funcionário — é o mesmo campo PIN do cadastro),
+  botão **🔑 Ver / trocar PINs de ponto** (lista todos os PINs de uma vez
+  em ordem crescente, com busca por nome/cargo/PIN, destaca repetidos e em
+  branco, gera PIN livre com um toque e salva por funcionário — é o mesmo
+  campo PIN do cadastro),
   **periculosidade e insalubridade (%, opcionais)** — entram automaticamente
   no cálculo de FGTS, INSS e 13º em Obrigações, já que têm natureza salarial —
   espelho de ponto, abono de falta, resumo no topo (total de ativos e quantos

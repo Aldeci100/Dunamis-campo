@@ -557,6 +557,8 @@ document.getElementById("btnExportarPdf").addEventListener("click", gerarPdfFunc
 
 const modalPins = document.getElementById("modalPins");
 const listaPinsEl = document.getElementById("listaPins");
+const buscaPinsEl = document.getElementById("buscaPins");
+const contagemPinsEl = document.getElementById("contagemPins");
 
 function pinsEmUso(exceto) {
     const mapa = {};
@@ -579,6 +581,7 @@ function gerarPinLivre(exceto) {
 function renderizarPins() {
     if (!funcionariosCache.length) {
         listaPinsEl.innerHTML = '<div class="vazio">Nenhum funcionário cadastrado.</div>';
+        contagemPinsEl.textContent = "";
         return;
     }
 
@@ -591,10 +594,16 @@ function renderizarPins() {
         if (f && valor !== (f.pin || "")) pendentes[el.dataset.id] = valor;
     });
 
-    const ordemStatus = { ativo: 0, afastado: 1, inativo: 2 };
+    // PIN crescente; quem não tem PIN vai pro fim; empate (PIN repetido)
+    // desempata por nome
+    const chavePin = (f) => (f.pin ? Number(f.pin) : Infinity);
     const lista = funcionariosCache
         .slice()
-        .sort((a, b) => (ordemStatus[a.status] ?? 9) - (ordemStatus[b.status] ?? 9) || (a.nome || "").localeCompare(b.nome || ""));
+        .sort((a, b) => {
+            const diff = chavePin(a) - chavePin(b);
+            if (diff !== 0 && !Number.isNaN(diff)) return diff;
+            return (a.nome || "").localeCompare(b.nome || "");
+        });
 
     listaPinsEl.innerHTML = lista.map((f) => {
         const repetidoCom = f.pin ? (pinsEmUso(f.id)[f.pin] || []) : [];
@@ -605,7 +614,7 @@ function renderizarPins() {
                 : "";
 
         return `
-        <div class="item" data-id="${f.id}">
+        <div class="item" data-id="${f.id}" data-busca="${`${f.nome || ""} ${f.cargo || ""} ${f.pin || ""}`.toLowerCase().replace(/"/g, "")}">
             <div class="linha-topo">
                 <div>
                     <div class="nome">${f.nome}</div>
@@ -639,10 +648,31 @@ function renderizarPins() {
             await salvarDocumento(COLECAO, { pin }, id);
         });
     });
+
+    aplicarBuscaPins();
 }
+
+// Só esconde/mostra as linhas (não redesenha), assim o que foi digitado
+// e ainda não salvo continua lá enquanto você busca outro funcionário.
+function aplicarBuscaPins() {
+    const termo = buscaPinsEl.value.trim().toLowerCase();
+    const itens = listaPinsEl.querySelectorAll(".item");
+    let visiveis = 0;
+    itens.forEach((el) => {
+        const mostra = !termo || el.dataset.busca.includes(termo);
+        el.style.display = mostra ? "" : "none";
+        if (mostra) visiveis++;
+    });
+    contagemPinsEl.textContent = itens.length
+        ? (termo ? `${visiveis} de ${itens.length} funcionários` : `${itens.length} funcionários, em ordem crescente de PIN`)
+        : "";
+}
+
+buscaPinsEl.addEventListener("input", aplicarBuscaPins);
 
 document.getElementById("btnAbrirPins").addEventListener("click", () => {
     listaPinsEl.innerHTML = "";
+    buscaPinsEl.value = "";
     renderizarPins();
     modalPins.style.display = "flex";
 });
