@@ -409,6 +409,44 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
             (p.geo.precisao ? `<br><span class="peq">precisão ~${p.geo.precisao}m</span>` : "");
     }
 
+    function descAparelho(a) {
+        return [a.modelo, a.sistema, a.navegador].filter(Boolean).join(" · ") +
+            `<br><span class="peq">código ${a.id}</span>`;
+    }
+
+    const celulaAparelho = (p) => (p.aparelho && p.aparelho.id ? descAparelho(p.aparelho) : "<i>não registrado</i>");
+
+    // Resumo dos aparelhos usados por esse funcionário no mês, e se outros
+    // funcionários bateram ponto do mesmo aparelho (esperado no aparelho
+    // compartilhado da obra; suspeito num celular pessoal).
+    const todosDoMes = pontosCache.filter((p) => p.timestamp >= inicio && p.timestamp < fim && p.aparelho && p.aparelho.id);
+    const meusAparelhos = {};
+    pontosDoMes.forEach((p) => {
+        if (!p.aparelho || !p.aparelho.id) return;
+        const a = (meusAparelhos[p.aparelho.id] = meusAparelhos[p.aparelho.id] || { info: p.aparelho, n: 0 });
+        a.n++;
+    });
+    const idsAparelhos = Object.keys(meusAparelhos);
+    const linhasAparelhos = idsAparelhos.map((id) => {
+        const outros = new Set(
+            todosDoMes
+                .filter((p) => p.aparelho.id === id && p.funcionarioId !== funcionario.id)
+                .map((p) => funcionariosCache.find((f) => f.id === p.funcionarioId)?.nome || "outro funcionário")
+        );
+        return `<tr><td>${descAparelho(meusAparelhos[id].info)}</td><td>${meusAparelhos[id].n}</td><td>${outros.size ? Array.from(outros).join(", ") : "—"}</td></tr>`;
+    }).join("");
+    const avisoAparelhos = idsAparelhos.length > 1
+        ? `<p class="alerta">⚠️ Marcações feitas em ${idsAparelhos.length} aparelhos diferentes neste mês.</p>`
+        : "";
+    const blocoAparelhos = idsAparelhos.length
+        ? `<h3>Aparelhos usados no mês</h3>${avisoAparelhos}
+  <table>
+    <thead><tr><th>Aparelho</th><th>Marcações</th><th>Também usado por</th></tr></thead>
+    <tbody>${linhasAparelhos}</tbody>
+  </table>
+  <p class="peq">O código identifica o aparelho/navegador; some se limpar os dados do navegador ou reinstalar o app (aí aparece como aparelho novo). Serve de indício, não de prova.</p>`
+        : "";
+
     const linhas = dias.length
         ? dias.map((dia) => {
             const pontos = porDia[dia] || [];
@@ -428,10 +466,10 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
             const linhasDia = pontos.map((p) => {
                 const obra = obrasCache.find((o) => o.id === p.obraId);
                 const rotulo = p.tipo === "entrada" ? (p.almoco ? "Volta do almoço" : "Entrada") : (p.almoco ? "Ida p/ almoço" : "Saída");
-                return `<td>${rotulo}</td><td>${formatarHora(p.timestamp)}</td><td>${obra ? obra.nome : "—"}</td><td>${celulaLocalizacao(p)}</td>`;
+                return `<td>${rotulo}</td><td>${formatarHora(p.timestamp)}</td><td>${obra ? obra.nome : "—"}</td><td>${celulaLocalizacao(p)}</td><td>${celulaAparelho(p)}</td>`;
             });
             if (abono) {
-                linhasDia.push(`<td colspan="4"><i>Abonado: ${rotuloAbono[abono.tipo] || abono.tipo}${abono.motivo ? " — " + abono.motivo : ""}</i></td>`);
+                linhasDia.push(`<td colspan="5"><i>Abonado: ${rotuloAbono[abono.tipo] || abono.tipo}${abono.motivo ? " — " + abono.motivo : ""}</i></td>`);
             }
 
             const n = linhasDia.length;
@@ -441,7 +479,7 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
                 return `<tr>${inicio}${resto}${fimLinha}</tr>`;
             }).join("");
         }).join("")
-        : '<tr><td colspan="6">Nenhum ponto registrado nesse mês.</td></tr>';
+        : '<tr><td colspan="7">Nenhum ponto registrado nesse mês.</td></tr>';
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -457,6 +495,8 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ddd; vertical-align: top; }
   th { background: #f2f2f2; }
   .peq { font-size: 11px; color: #666; }
+  h3 { font-size: 14px; margin-top: 26px; margin-bottom: 0; }
+  .alerta { color: #b45309; font-weight: bold; font-size: 13px; margin: 8px 0 0; }
   a { color: #0b5cad; }
   tfoot td { font-weight: bold; border-top: 2px solid #333; }
   .assinaturas { display: flex; gap: 40px; margin-top: 60px; }
@@ -476,10 +516,12 @@ document.getElementById("btnGerarEspelho").addEventListener("click", () => {
   </div>
 
   <table>
-    <thead><tr><th>Data</th><th>Tipo</th><th>Hora</th><th>Obra</th><th>Localização</th><th>Total do dia</th></tr></thead>
+    <thead><tr><th>Data</th><th>Tipo</th><th>Hora</th><th>Obra</th><th>Localização</th><th>Aparelho</th><th>Total do dia</th></tr></thead>
     <tbody>${linhas}</tbody>
-    <tfoot><tr><td colspan="5">Total do mês</td><td>${formatarHoras(totalMesHoras)}</td></tr></tfoot>
+    <tfoot><tr><td colspan="6">Total do mês</td><td>${formatarHoras(totalMesHoras)}</td></tr></tfoot>
   </table>
+
+  ${blocoAparelhos}
 
   <div class="assinaturas">
     <div class="assinatura">Assinatura do funcionário</div>

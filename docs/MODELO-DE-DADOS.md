@@ -97,6 +97,11 @@ pontos/{id}
                             almoço sem precisar de regra extra)
   timestamp       number   (Date.now(), em ms)
   geo             { lat, lng, precisao }
+  aparelho        { id, modelo, sistema, navegador }
+                  (id = código aleatório guardado no próprio aparelho —
+                  navegador não dá IMEI/MAC; some se limpar os dados do
+                  navegador ou reinstalar o app e vira "aparelho novo".
+                  Indício, não prova. Marcações antigas não têm)
   fotoUrl         string | null
 ```
 

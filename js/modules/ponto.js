@@ -38,6 +38,72 @@ function rotuloMarcacao(p) {
     return p.almoco ? "Ida para o almoço" : "Saída";
 }
 
+// ---------- Identificação do aparelho ----------
+// O navegador não dá IMEI nem MAC. Então cada aparelho ganha um código
+// aleatório guardado nele mesmo (some se limpar os dados do navegador ou
+// reinstalar o app — nesse caso vira "aparelho novo") + modelo/sistema/
+// navegador que o próprio navegador informa. Serve pra RH perceber quando
+// o mesmo funcionário bate de aparelhos diferentes, ou um aparelho bate
+// por várias pessoas. Não é prova: quem entende do assunto consegue forjar.
+function codigoAparelho() {
+    try {
+        let id = localStorage.getItem("gc_aparelhoId");
+        if (!id) {
+            const bruto = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+            id = bruto.replace(/-/g, "").slice(0, 10).toUpperCase();
+            localStorage.setItem("gc_aparelhoId", id);
+        }
+        return id;
+    } catch {
+        return "SEM-CODIGO";
+    }
+}
+
+async function infoAparelho() {
+    const ua = navigator.userAgent || "";
+    const uad = navigator.userAgentData;
+    let modelo = "";
+    let sistema = "";
+
+    // Chrome moderno esconde o modelo no User-Agent ("K"); precisa pedir à parte.
+    if (uad && uad.getHighEntropyValues) {
+        try {
+            const h = await uad.getHighEntropyValues(["model", "platformVersion"]);
+            modelo = h.model || "";
+            const versao = h.platformVersion ? parseInt(h.platformVersion.split(".")[0], 10) : 0;
+            if (uad.platform === "Windows") sistema = versao >= 13 ? "Windows 11" : "Windows 10";
+            else if (uad.platform) sistema = uad.platform + (versao ? " " + versao : "");
+        } catch { /* segue com o User-Agent */ }
+    }
+
+    if (!modelo) {
+        const m = ua.match(/Android [\d.]+; ([^;)]+)/);
+        if (m && m[1].trim() !== "K") modelo = m[1].trim();
+        else if (/iPhone/.test(ua)) modelo = "iPhone";
+        else if (/iPad/.test(ua)) modelo = "iPad";
+    }
+    if (!modelo) modelo = /Mobi|Android|iPhone/.test(ua) ? "Celular" : "Computador";
+
+    if (!sistema) {
+        const a = ua.match(/Android ([\d.]+)/);
+        const i = ua.match(/OS (\d+)[_\d]* like Mac/);
+        if (a) sistema = "Android " + a[1].split(".")[0];
+        else if (i) sistema = "iOS " + i[1];
+        else if (/Windows/.test(ua)) sistema = "Windows";
+        else if (/Mac OS X/.test(ua)) sistema = "macOS";
+        else if (/Linux/.test(ua)) sistema = "Linux";
+    }
+
+    let navegador = "";
+    if (/Edg\//.test(ua)) navegador = "Edge";
+    else if (/OPR\//.test(ua)) navegador = "Opera";
+    else if (/Firefox\//.test(ua)) navegador = "Firefox";
+    else if (/Chrome\//.test(ua)) navegador = "Chrome";
+    else if (/Safari\//.test(ua)) navegador = "Safari";
+
+    return { id: codigoAparelho(), modelo, sistema, navegador };
+}
+
 function atualizarRelogio() {
     horaAtualEl.textContent = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
@@ -188,6 +254,7 @@ async function registrarPonto(tipo, almoco) {
     geoInfo.textContent = "Obtendo localização...";
 
     const geo = await obterLocalizacao();
+    const aparelho = await infoAparelho();
 
     await salvarDocumento("pontos", {
         funcionarioId: funcId,
@@ -197,6 +264,7 @@ async function registrarPonto(tipo, almoco) {
         ...(almoco ? { almoco: true } : {}),
         timestamp: Date.now(),
         geo,
+        aparelho,
     });
 
     if (!modoIndividual) localStorage.setItem("gc_pontoFuncionarioId", funcId);

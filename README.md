@@ -101,7 +101,10 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
     **1 entrada → 2 ida para o almoço → 3 volta do almoço → 4 saída** (sem
     escolher qual marcação fazer; depois da saída o dia fica encerrado). O
     intervalo do almoço é descontado das horas trabalhadas e aparece no
-    espelho de ponto. Cria-se em **Usuários** → marcar "Funcionário",
+    espelho de ponto. Cada marcação registra também o **aparelho** (modelo,
+    sistema, navegador e um código do aparelho); o espelho mostra isso e avisa
+    quando o funcionário bateu de mais de um aparelho no mês ou quando o mesmo
+    aparelho foi usado por outros funcionários. Cria-se em **Usuários** → marcar "Funcionário",
     escolher quem é e, se quiser, já preencher a senha inicial
   - **Aparelho da obra** — *campo*: login único compartilhado, ex:
     `campo@dunamis.com`, num aparelho fixo do encarregado; cada funcionário
