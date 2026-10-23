@@ -40,7 +40,12 @@ function preencherSelectFuncionarios(selecionado) {
 function atualizarBlocoFuncionario() {
     blocoFuncionario.style.display = checkFuncionario.checked ? "block" : "none";
 }
-checkFuncionario.addEventListener("change", atualizarBlocoFuncionario);
+checkFuncionario.addEventListener("change", () => {
+    // "Campo" abre a lista de TODOS os funcionários (aparelho da obra) e
+    // sobrepõe o modo individual — então não deixa os dois juntos por engano.
+    if (checkFuncionario.checked) document.getElementById("papelCampo").checked = false;
+    atualizarBlocoFuncionario();
+});
 
 // Cria o login (e-mail/CPF + senha) sem derrubar a sessão do admin: usa uma
 // segunda instância do Firebase só pra isso.
@@ -139,6 +144,9 @@ form.addEventListener("submit", async (e) => {
     if (ehFuncionario && !selectFuncionario.value) {
         alert("Escolha qual funcionário é esse acesso.");
         return;
+    }
+    if (ehFuncionario && papeisSelecionados.some((p) => p !== "funcionario")) {
+        if (!confirm("Atenção: junto com outros setores (Campo, RH, Administrador...) esse acesso deixa de ser individual e passa a ver os outros funcionários. Pra ver só o próprio ponto, deixe marcado apenas \"Funcionário\"." + String.fromCharCode(10, 10) + "Salvar mesmo assim?")) return;
     }
 
     const dados = {
