@@ -16,11 +16,15 @@
   </div>
 
   <p class="aviso" style="text-align:left;margin-top:0;">
-    ⚠️ Aqui você <strong>não</strong> cria a senha de ninguém — só libera
-    o que a pessoa pode acessar. A senha de login é criada à parte, no
-    <strong>Console do Firebase → Authentication → Add user</strong>
-    (mesmo e-mail que você vai cadastrar aqui embaixo). Sem os dois
-    passos feitos, a pessoa não consegue entrar.
+    Aqui você libera o que cada pessoa pode acessar e, se quiser, já
+    <strong>cria o login dela</strong> (preenchendo a senha inicial). Se
+    preferir criar a senha no <strong>Console do Firebase →
+    Authentication → Add user</strong>, deixe o campo da senha em branco
+    — mas sem o login criado de um jeito ou de outro, a pessoa não
+    consegue entrar.<br>
+    <strong>Funcionário de campo</strong> (vê só o próprio ponto): marque
+    "Funcionário" e escolha quem ele é. Se ele não tem e-mail, digite o
+    <strong>CPF (só números)</strong> no lugar do e-mail — ele entra com o CPF.
   </p>
 
   <div id="listaUsuarios" class="lista"></div>
@@ -34,8 +38,8 @@
     <form id="formUsuario">
       <input type="hidden" id="usuarioIdOriginal">
 
-      <label>E-mail (o mesmo usado no login)</label>
-      <input type="email" id="usuarioEmail" required>
+      <label>E-mail ou CPF (o mesmo usado no login)</label>
+      <input type="text" id="usuarioEmail" placeholder="email@exemplo.com ou 00000000000" autocapitalize="none" required>
 
       <label>Nome</label>
       <input type="text" id="usuarioNome">
@@ -62,6 +66,21 @@
         <label style="margin:0;" for="papelCampo">Campo (ponto)</label>
       </div>
 
+      <div class="check">
+        <input type="checkbox" id="papelFuncionario" value="funcionario">
+        <label style="margin:0;" for="papelFuncionario">Funcionário (vê e bate só o próprio ponto)</label>
+      </div>
+
+      <div id="blocoFuncionarioVinculado" style="display:none;">
+        <label>Quem é esse funcionário?</label>
+        <select id="usuarioFuncionarioId"></select>
+      </div>
+
+      <div id="blocoSenhaInicial">
+        <label>Senha inicial (opcional — cria o login agora)</label>
+        <input type="text" id="usuarioSenha" minlength="6" autocomplete="off" placeholder="Mínimo 6 caracteres">
+      </div>
+
       <button type="submit" class="btn-primaria">Salvar</button>
       <button type="button" class="btn-secundaria" style="margin-top:10px;" id="btnCancelarUsuario">Cancelar</button>
       <button type="button" class="btn-perigo" style="width:100%;margin-top:10px;display:none;" id="btnExcluirUsuario">Remover acesso</button>
@@ -76,6 +95,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/usuarios.js?v=2"></script>
+<script src="../js/modules/usuarios.js?v=3"></script>
 </body>
 </html>

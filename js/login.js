@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
         botao.disabled = true;
         botao.textContent = "Entrando...";
 
-        firebaseAuth.signInWithEmailAndPassword(usuario, senha)
+        firebaseAuth.signInWithEmailAndPassword(emailDeLogin(usuario), senha)
             .then(() => {
                 window.location.href = "pages/dashboard.html";
             })

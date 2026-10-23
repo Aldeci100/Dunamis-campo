@@ -44,6 +44,17 @@ service cloud.firestore {
       return logado() && (ehAdmin() || papeisAtual().hasAny(papeis));
     }
 
+    // Papel "funcionario": o próprio trabalhador, com login individual.
+    // usuarios/{email}.funcionarioId aponta pro cadastro dele em
+    // funcionarios — e é SÓ por esse id que ele lê o cadastro e o ponto.
+    function ehFuncionario() {
+      return logado() && ('funcionario' in papeisAtual());
+    }
+
+    function meuFuncionarioId() {
+      return get(/databases/$(database)/documents/usuarios/$(emailAtual())).data.funcionarioId;
+    }
+
     match /usuarios/{email} {
       allow read: if logado() && (emailAtual() == email || ehAdmin());
       allow write: if ehAdmin();
@@ -55,14 +66,24 @@ service cloud.firestore {
     }
 
     match /funcionarios/{id} {
-      allow read: if temPapel(['rh', 'sst', 'financeiro', 'campo']);
+      allow read: if temPapel(['rh', 'sst', 'financeiro', 'campo'])
+                  || (ehFuncionario() && id == meuFuncionarioId());
       allow create, update: if temPapel(['rh']);
       allow delete: if ehAdmin();
     }
 
     match /pontos/{id} {
-      allow read: if temPapel(['rh', 'financeiro', 'campo']);
+      allow read: if temPapel(['rh', 'financeiro', 'campo'])
+                  || (ehFuncionario() && resource.data.funcionarioId == meuFuncionarioId());
       allow write: if temPapel(['campo']);
+      // Funcionário só CRIA marcação em nome dele mesmo, e com a hora
+      // dentro de 5 min da hora do servidor (não dá pra marcar ponto
+      // com horário inventado). Não edita nem apaga.
+      allow create: if ehFuncionario()
+                    && request.resource.data.funcionarioId == meuFuncionarioId()
+                    && request.resource.data.timestamp is number
+                    && request.resource.data.timestamp > request.time.toMillis() - 300000
+                    && request.resource.data.timestamp < request.time.toMillis() + 300000;
     }
 
     match /alocacoes/{id} {

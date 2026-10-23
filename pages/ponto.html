@@ -15,11 +15,19 @@
     <span style="width:50px;"></span>
   </div>
 
-  <label>Funcionário</label>
-  <select id="pontoFuncionario"></select>
+  <div id="blocoSelecao">
+    <label>Funcionário</label>
+    <select id="pontoFuncionario"></select>
 
-  <label>Obra</label>
-  <select id="pontoObra"></select>
+    <label>Obra</label>
+    <select id="pontoObra"></select>
+  </div>
+
+  <div id="blocoIdentidade" class="ponto-status" style="display:none;padding:16px;text-align:left;">
+    <div class="sub">Funcionário</div>
+    <div class="nome" id="pontoIdentidadeNome" style="font-size:20px;font-weight:700;"></div>
+    <div class="sub" id="pontoIdentidadeObra" style="margin-top:6px;"></div>
+  </div>
 
   <div class="ponto-status" style="margin-top:20px;">
     <div class="sub" id="pontoUltimoRegistro">Nenhum registro hoje</div>
@@ -31,6 +39,9 @@
 
   <label style="margin-top:24px;">Registros de hoje</label>
   <div id="listaPontosHoje" class="lista"></div>
+
+  <button type="button" class="btn-secundaria" id="btnTrocarSenha" style="display:none;margin-top:24px;">🔑 Trocar minha senha</button>
+  <button type="button" class="btn-secundaria" id="btnSairPonto" style="display:none;margin-top:10px;" onclick="sair()">Sair</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -40,6 +51,6 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/permissoes.js"></script>
 <script src="../js/dados.js"></script>
-<script src="../js/modules/ponto.js?v=2"></script>
+<script src="../js/modules/ponto.js?v=3"></script>
 </body>
 </html>

@@ -34,6 +34,10 @@ funcionarios/{funcionarioId}
   status            "ativo" | "inativo" | "afastado"
   telefone          string
   obraAtualId       string   (referência obras/{obraId})
+  obraAtualNome     string   (cópia do nome da obra — o funcionário com login
+                              próprio não pode ler a coleção `obras`, então o
+                              nome dele vem daqui. A tela Funcionários mantém
+                              em dia sozinha ao abrir)
   pin               string   (4 dígitos, opcional — confirma quem bate o ponto no
                               login compartilhado "campo"; não é credencial de
                               segurança, texto puro é aceitável)
@@ -85,8 +89,9 @@ Check-in/check-out mobile com geolocalização.
 pontos/{id}
   funcionarioId   string
   obraId          string
+  obraNome        string   (cópia do nome da obra na hora da marcação)
   tipo            "entrada" | "saida"
-  timestamp       timestamp
+  timestamp       number   (Date.now(), em ms)
   geo             { lat, lng, precisao }
   fotoUrl         string | null
 ```
@@ -383,7 +388,10 @@ sabendo só o e-mail — sem precisar ir atrás do UID no Authentication.
 ```
 usuarios/{email}
   nome    string
-  papel   ("admin" | "rh" | "sst" | "financeiro" | "campo")[]
+  funcionarioId  string | null   (só pro papel "funcionario": id do cadastro
+                                   dele em funcionarios — é por aqui que as
+                                   regras liberam só o ponto dele)
+  papel   ("admin" | "rh" | "sst" | "financeiro" | "campo" | "funcionario")[]
           (lista — uma pessoa pode ter mais de um papel, ex: ["rh","campo"].
           Documentos antigos gravados como string única continuam
           funcionando: o app e as regras normalizam pra lista na hora
@@ -392,11 +400,14 @@ usuarios/{email}
 
 ## Usuários e papéis
 
-A conta de login (e-mail/senha) é criada no **Console do Firebase →
-Authentication** — isso continua manual, fora do app. O que o app
-controla é *o que essa conta pode acessar*, via `usuarios/{email}`.
-São duas coisas separadas de propósito: a tela Usuários não tem campo
-de senha. Uma pessoa pode marcar mais de um papel (ex: RH + Campo) —
+A conta de login (e-mail/senha) pode ser criada de dois jeitos: pela
+própria tela Usuários (campo "Senha inicial", que cria o login na hora
+sem derrubar a sessão do admin) ou no **Console do Firebase →
+Authentication**. O que controla *o que essa conta pode acessar* é
+`usuarios/{email}`. Quem não tem e-mail entra com o **CPF** (só números):
+o app converte em `cpf@funcionario.dunamis` (e-mail de mentira, só pro
+Firebase aceitar) — o `id` do documento em `usuarios` é esse e-mail.
+Uma pessoa pode marcar mais de um papel (ex: RH + Campo) —
 quem tem "admin" sempre vê tudo, independente dos outros papéis
 marcados.
 
@@ -406,7 +417,8 @@ marcados.
 | rh | Funcionários (cadastra e edita; excluir é só admin) |
 | sst | SST (ASO, EPI, treinamentos, ocorrências) |
 | financeiro | Despesas / Financeiro / Navios (lança e edita; excluir é só admin) |
-| campo | Ponto |
+| campo | Ponto, modo "aparelho da obra" (escolhe qualquer funcionário na lista e confirma com o PIN) |
+| funcionario | Ponto, modo individual: só o **próprio** ponto. Lê o próprio cadastro e as próprias marcações (por `funcionarioId`), cria marcação só em nome dele e só com a hora do servidor ±5 min; não edita nem apaga. Não lê obras, outros funcionários nem nada financeiro |
 
 Quem não tem papel configurado vê uma tela de "sem permissão" ao
 logar. O primeiro admin precisa ser criado manualmente no Firestore
@@ -418,6 +430,7 @@ Usuários.
 - [x] Obras (CRUD)
 - [x] Funcionários (CRUD + benefícios)
 - [x] Ponto mobile (check-in/out por obra + geolocalização)
+- [x] Ponto individual: login próprio por funcionário (e-mail ou CPF), vê só o dele
 - [x] Papéis de usuário (RH / SST / financeiro / campo) com permissões no Firestore
 - [x] Despesas / materiais por obra
 - [x] SST (ASO, EPI, treinamentos, ocorrências)
@@ -428,3 +441,9 @@ Usuários.
 - Exportar o fechamento do Financeiro em PDF/planilha
 - Papel "campo" hoje lê a lista inteira de funcionários ativos no Ponto;
   se a equipe crescer muito, considerar restringir por obra selecionada
+- Login individual: não há "esqueci a senha" pra quem entra com CPF (não
+  tem e-mail real). Reset é pelo Console do Firebase → Authentication, ou
+  o próprio funcionário troca em Ponto → 🔑 Trocar minha senha.
+- A hora da marcação vem do relógio do celular, validada pelas regras só
+  dentro de ±5 min do servidor. A localização (GPS) vem do aparelho e
+  também pode ser falseada com apps de GPS falso — não é prova absoluta.

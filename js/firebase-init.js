@@ -29,3 +29,13 @@ if (firebaseConfigurado && window.firebase) {
     firebaseAuth = firebase.auth();
     if (firebase.firestore) firebaseDb = firebase.firestore();
 }
+
+// Login por e-mail OU por CPF (pra funcionário de campo sem e-mail).
+// Quem digita só números (CPF) vira "cpf@funcionario.dunamis" — um e-mail
+// de mentira, só pra o Firebase aceitar; ninguém precisa abrir essa caixa.
+function emailDeLogin(texto) {
+    const t = (texto || "").trim().toLowerCase();
+    if (t.includes("@")) return t;
+    const digitos = t.replace(/\D/g, "");
+    return digitos ? digitos + "@funcionario.dunamis" : t;
+}

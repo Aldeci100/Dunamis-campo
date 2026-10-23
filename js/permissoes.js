@@ -1,7 +1,9 @@
 // =====================================================
 // CONTROLE DE ACESSO POR PAPEL
 // =====================================================
-// Papéis possíveis: admin, rh, sst, financeiro, campo.
+// Papéis possíveis: admin, rh, sst, financeiro, campo, funcionario.
+// "funcionario" = o próprio trabalhador, com login individual: só vê e
+// bate o PRÓPRIO ponto (usuarios/{email}.funcionarioId aponta pra ele).
 // Uma pessoa pode ter vários papéis (ex: RH + Campo). "admin" sempre
 // tem acesso a tudo. Os demais só acessam o que está liberado para
 // os papéis deles (ver docs/MODELO-DE-DADOS.md).
@@ -15,6 +17,7 @@
 
 let papeisUsuario = null; // array de strings, ou null se não configurado
 let papelCarregado = false;
+let funcionarioIdUsuario = null; // só pro papel "funcionario": qual cadastro de funcionário é dele
 
 function normalizarPapeis(bruto) {
     if (!bruto) return null;
@@ -27,7 +30,14 @@ async function carregarPapel() {
 
     if (!firebaseConfigurado) {
         // Modo local: um usuário só, sem sentido restringir por papel.
-        papeisUsuario = ["admin"];
+        // (Pra testar a visão do funcionário localmente: no console,
+        // localStorage.gc_papelLocal = '["funcionario"]' e gc_funcionarioIdLocal = "<id>".)
+        try {
+            papeisUsuario = JSON.parse(localStorage.getItem("gc_papelLocal")) || ["admin"];
+        } catch {
+            papeisUsuario = ["admin"];
+        }
+        funcionarioIdUsuario = localStorage.getItem("gc_funcionarioIdLocal") || null;
         papelCarregado = true;
         return papeisUsuario;
     }
@@ -44,6 +54,7 @@ async function carregarPapel() {
 
     const doc = await firebaseDb.collection("usuarios").doc(usuario.email.toLowerCase()).get();
     papeisUsuario = doc.exists ? normalizarPapeis(doc.data().papel) : null;
+    funcionarioIdUsuario = doc.exists ? (doc.data().funcionarioId || null) : null;
     papelCarregado = true;
     return papeisUsuario;
 }

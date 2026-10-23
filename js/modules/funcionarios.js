@@ -42,6 +42,8 @@ function formatarDataIso(iso) {
 let obrasCache = [];
 let funcionariosCache = [];
 let pontosCache = [];
+let funcionariosCarregados = null;
+const nomesSincronizados = new Set();
 let abonosCache = [];
 let funcionarioEspelhoAtual = null;
 let funcionarioAbonoAtual = null;
@@ -251,6 +253,7 @@ form.addEventListener("submit", async (e) => {
         dataAdmissao: document.getElementById("funcAdmissao").value,
         ultimasFerias: document.getElementById("funcUltimasFerias").value,
         obraAtualId: document.getElementById("funcObra").value,
+        obraAtualNome: obrasCache.find((o) => o.id === document.getElementById("funcObra").value)?.nome || "",
         status: document.getElementById("funcStatus").value,
         pin,
         salario: Number(campoSalario.value) || 0,
@@ -708,6 +711,7 @@ observarColecao("obras", (obras) => {
     preencherFiltroObra();
     renderizarResumo();
     renderizarListaFiltrada();
+    sincronizarNomeObra();
 });
 
 observarColecao("pontos", (pontos) => {
@@ -719,9 +723,28 @@ observarColecao("abonos", (abonos) => {
     if (modalAbono.style.display === "flex") renderizarAbonosFuncionario();
 });
 
+// O funcionário com login próprio não pode ler a coleção de obras (tem valor de
+// contrato etc.), então o nome da obra dele fica copiado no cadastro
+// (obraAtualNome). Aqui mantemos essa cópia em dia — também cobre quem foi
+// cadastrado antes e obra que mudou de nome.
+
+function sincronizarNomeObra() {
+    if (!funcionariosCarregados || !obrasCache.length) return;
+    funcionariosCarregados.forEach((f) => {
+        if (!f.obraAtualId) return;
+        const nome = obrasCache.find((o) => o.id === f.obraAtualId)?.nome;
+        const chave = f.id + "|" + nome;
+        if (!nome || f.obraAtualNome === nome || nomesSincronizados.has(chave)) return;
+        nomesSincronizados.add(chave);
+        salvarDocumento(COLECAO, { obraAtualNome: nome }, f.id).catch(() => {});
+    });
+}
+
 observarColecao(COLECAO, (funcionarios) => {
+    funcionariosCarregados = funcionarios;
     renderizarFuncionarios(funcionarios);
     if (modalPins.style.display === "flex") renderizarPins();
+    sincronizarNomeObra();
 });
 
 })();

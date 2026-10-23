@@ -93,11 +93,16 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   estão em cada obra, sempre com o total geral independente de filtro), busca
   por nome e filtro por obra e por status, e exportação da lista (nome/função/
   obra/status, seguindo o filtro ativo) em Excel (CSV) ou PDF — *rh*
-- **Ponto** — check-in/check-out por obra com geolocalização — *campo*
-  (login único compartilhado, ex: `campo@dunamis.com`, num aparelho fixo
-  da obra/encarregado; cada funcionário confirma com o próprio PIN de
-  4 dígitos, cadastrado em **Funcionários**, para evitar que um bata o
-  ponto pelo outro)
+- **Ponto** — check-in/check-out por obra com geolocalização. Dois jeitos:
+  - **Individual (recomendado)** — *funcionario*: cada funcionário tem login
+    próprio (e-mail ou CPF + senha), instala o app no celular e vê/bate só o
+    ponto **dele** (não enxerga os outros nem nada de obras/financeiro). A
+    obra vem do cadastro dele. Cria-se em **Usuários** → marcar "Funcionário",
+    escolher quem é e, se quiser, já preencher a senha inicial
+  - **Aparelho da obra** — *campo*: login único compartilhado, ex:
+    `campo@dunamis.com`, num aparelho fixo do encarregado; cada funcionário
+    confirma com o próprio PIN de 4 dígitos (cadastrado em **Funcionários**)
+    para evitar que um bata o ponto pelo outro
 - **Despesas** — material, transporte, aluguel, água, luz, outros, por obra,
   com total, campo de observação livre, opção de criar novos tipos próprios
   direto no formulário ("+ Adicionar novo tipo..."), anexo de comprovante/
@@ -123,7 +128,9 @@ docs/MODELO-DE-DADOS.md coleções do Firestore e o que falta construir
   R$ de periculosidade, insalubridade e hora extra de cada um, e a obra de
   cada um, pro mês selecionado no filtro acima. Mesma separação no
   relatório de Obrigações — *financeiro*
-- **Usuários** — libera o acesso de cada e-mail a um setor — *admin*
+- **Usuários** — libera o acesso de cada e-mail (ou CPF) a um setor e, se
+  quiser, já cria o login com senha inicial; vincula o acesso "Funcionário" ao
+  cadastro da pessoa — *admin*
 - **Obrigações** — folha do mês com o detalhe em R$ de cada adicional por
   funcionário (salário + periculosidade + insalubridade + **hora extra**,
   calculada a partir das horas batidas no Ponto além de 220h/mês, com

@@ -37,6 +37,24 @@ async function listarColecao(colecao) {
     return lerLocal(colecao);
 }
 
+// Lista só os documentos onde campo == valor. O papel "funcionario" PRECISA
+// usar isso (e não listarColecao): as regras do Firestore negam listar tudo.
+async function listarColecaoOnde(colecao, campo, valor) {
+    if (firebaseConfigurado) {
+        const snap = await firebaseDb.collection(colecao).where(campo, "==", valor).get();
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    }
+    return lerLocal(colecao).filter((item) => item[campo] === valor);
+}
+
+async function lerDocumento(colecao, id) {
+    if (firebaseConfigurado) {
+        const doc = await firebaseDb.collection(colecao).doc(id).get();
+        return doc.exists ? { id: doc.id, ...doc.data() } : null;
+    }
+    return lerLocal(colecao).find((item) => item.id === id) || null;
+}
+
 async function salvarDocumento(colecao, dados, id) {
     if (firebaseConfigurado) {
         if (id) {
